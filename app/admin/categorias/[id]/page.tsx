@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Category } from '@/lib/types'
+import { useToast } from '@/contexts/ToastContext'
 
 export default function AdminCategoryEditPage() {
   const router = useRouter()
@@ -64,10 +65,11 @@ export default function AdminCategoryEditPage() {
     if (isNew) {
       const { error } = await supabase.from('categories').insert(formData)
       if (error) {
-        alert('Erro ao criar: ' + error.message)
+        addToast('error', `Erro ao criar categoria: ${error.message}`)
         setLoading(false)
         return
       }
+      addToast('success', 'Categoria criada com sucesso!')
     } else {
       const { error } = await supabase
         .from('categories')
@@ -75,13 +77,16 @@ export default function AdminCategoryEditPage() {
         .eq('id', categoryId)
       
       if (error) {
-        alert('Erro ao atualizar: ' + error.message)
+        addToast('error', `Erro ao atualizar categoria: ${error.message}`)
         setLoading(false)
         return
       }
+      addToast('success', 'Categoria atualizada com sucesso!')
     }
 
-    router.push('/admin/categorias')
+    setTimeout(() => {
+      router.push('/admin/categorias')
+    }, 500)
   }
 
   if (loading) {

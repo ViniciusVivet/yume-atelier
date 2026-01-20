@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Upload, X, Loader2 } from 'lucide-react'
+import { useToast } from '@/contexts/ToastContext'
 
 interface ImageUploadProps {
   onUploadComplete: (urls: string[]) => void
@@ -18,6 +19,7 @@ export default function ImageUpload({
   const [uploading, setUploading] = useState(false)
   const [previewUrls, setPreviewUrls] = useState<string[]>(existingUrls)
   const [dragActive, setDragActive] = useState(false)
+  const { addToast } = useToast()
 
   const handleFile = async (files: FileList | null) => {
     if (!files || files.length === 0) return
@@ -43,7 +45,7 @@ export default function ImageUpload({
 
         if (uploadError) {
           console.error('Upload error:', uploadError)
-          alert(`Erro ao fazer upload: ${uploadError.message}`)
+          addToast('error', `Erro ao fazer upload: ${uploadError.message}`)
           continue
         }
 
@@ -60,7 +62,7 @@ export default function ImageUpload({
       onUploadComplete(newUrls)
     } catch (error) {
       console.error('Error:', error)
-      alert('Erro ao fazer upload das imagens')
+      addToast('error', 'Erro ao fazer upload das imagens')
     } finally {
       setUploading(false)
     }

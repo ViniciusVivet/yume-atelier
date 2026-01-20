@@ -6,6 +6,7 @@ import Header from '@/components/layout/Header'
 import { CategoriesProvider } from '@/contexts/CategoriesContext'
 import PageTransition from '@/components/ui/PageTransition'
 import CursorGlow from '@/components/ui/CursorGlow'
+import { ToastContainer } from '@/components/ui/Toast'
 import { Category } from '@/lib/types'
 
 export default function AppShell({
@@ -30,6 +31,7 @@ export default function AppShell({
             {children}
           </PageTransition>
         </main>
+        <ToastContainer />
       </div>
     </CategoriesProvider>
   )

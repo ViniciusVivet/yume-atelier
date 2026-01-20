@@ -6,12 +6,15 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Product, Category, ProductStatus } from '@/lib/types'
 import ImageUpload from '@/components/admin/ImageUpload'
+import VideoUpload from '@/components/admin/VideoUpload'
+import { useToast } from '@/contexts/ToastContext'
 
 export default function AdminProductEditPage() {
   const router = useRouter()
   const params = useParams()
   const productId = params.id as string
   const isNew = productId === 'novo'
+  const { addToast } = useToast()
 
   const [loading, setLoading] = useState(!isNew)
   const [categories, setCategories] = useState<Category[]>([])
@@ -79,10 +82,11 @@ export default function AdminProductEditPage() {
     if (isNew) {
       const { error } = await supabase.from('products').insert(formData)
       if (error) {
-        alert('Erro ao criar: ' + error.message)
+        addToast('error', `Erro ao criar produto: ${error.message}`)
         setLoading(false)
         return
       }
+      addToast('success', 'Produto criado com sucesso!')
     } else {
       const { error } = await supabase
         .from('products')
@@ -90,13 +94,16 @@ export default function AdminProductEditPage() {
         .eq('id', productId)
       
       if (error) {
-        alert('Erro ao atualizar: ' + error.message)
+        addToast('error', `Erro ao atualizar produto: ${error.message}`)
         setLoading(false)
         return
       }
+      addToast('success', 'Produto atualizado com sucesso!')
     }
 
-    router.push('/admin/produtos')
+    setTimeout(() => {
+      router.push('/admin/produtos')
+    }, 500)
   }
 
   if (loading) {
@@ -260,7 +267,20 @@ export default function AdminProductEditPage() {
 
         <div>
           <label className="block text-sm font-semibold text-cyber-text mb-2">
-            URL do Vídeo Hero
+            Vídeo Hero (upload)
+          </label>
+          <VideoUpload
+            existingUrl={formData.hero_video_url || undefined}
+            onUploadComplete={(url) => setFormData({ ...formData, hero_video_url: url || '' })}
+          />
+          <p className="text-xs text-cyber-textDim mt-2">
+            Opcional: faça upload direto de um vídeo para este produto.
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-cyber-text mb-2">
+            URL do Vídeo Hero (manual)
           </label>
           <input
             type="url"

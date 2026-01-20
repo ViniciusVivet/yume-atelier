@@ -1,12 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { SiteSettings } from '@/lib/types'
+import { useToast } from '@/contexts/ToastContext'
 
 export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const { addToast } = useToast()
   const [formData, setFormData] = useState<Partial<SiteSettings>>({
     site_title: 'YUME Atelier',
     site_description: '',
@@ -52,7 +55,7 @@ export default function AdminSettingsPage() {
         .eq('id', existing.id)
       
       if (error) {
-        alert('Erro ao salvar: ' + error.message)
+        addToast('error', `Erro ao salvar configurações: ${error.message}`)
         setSaving(false)
         return
       }
@@ -62,13 +65,13 @@ export default function AdminSettingsPage() {
         .insert(formData)
       
       if (error) {
-        alert('Erro ao criar: ' + error.message)
+        addToast('error', `Erro ao criar configurações: ${error.message}`)
         setSaving(false)
         return
       }
     }
 
-    alert('Configurações salvas com sucesso!')
+    addToast('success', 'Configurações salvas com sucesso!')
     setSaving(false)
   }
 

@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Product, Category } from '@/lib/types'
+import { useToast } from '@/contexts/ToastContext'
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
+  const { addToast } = useToast()
 
   useEffect(() => {
     fetchData()
@@ -34,10 +36,11 @@ export default function AdminProductsPage() {
     const { error } = await supabase.from('products').delete().eq('id', id)
 
     if (error) {
-      alert('Erro ao excluir: ' + error.message)
+      addToast('error', `Erro ao excluir produto: ${error.message}`)
       return
     }
 
+    addToast('success', 'Produto excluído com sucesso!')
     fetchData()
   }
 

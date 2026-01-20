@@ -4,6 +4,7 @@ import './globals.css'
 import { createServerClient } from '@/lib/supabase/server'
 import { CartProvider } from '@/contexts/CartContext'
 import { SiteSettingsProvider } from '@/contexts/SiteSettingsContext'
+import { ToastProvider } from '@/contexts/ToastContext'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { withTimeout } from '@/lib/utils/withTimeout'
 import AppShell from '@/components/layout/AppShell'
@@ -68,11 +69,13 @@ export default async function RootLayout({
     <html lang="pt-BR" className="dark">
       <body className={`${inter.variable} ${displayFont.variable} font-sans antialiased`}>
         <ErrorBoundary>
-          <SiteSettingsProvider>
-            <CartProvider>
-              <AppShell categories={shellCategories}>{children}</AppShell>
-            </CartProvider>
-          </SiteSettingsProvider>
+          <ToastProvider>
+            <SiteSettingsProvider>
+              <CartProvider>
+                <AppShell categories={shellCategories}>{children}</AppShell>
+              </CartProvider>
+            </SiteSettingsProvider>
+          </ToastProvider>
         </ErrorBoundary>
       </body>
     </html>
