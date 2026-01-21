@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -25,6 +25,19 @@ function HeaderContent() {
   const { cart, removeFromCart, updateQuantity, cartCount } = useCart()
   const { settings } = useSiteSettings()
 
+  const checkSession = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      setIsLoggedIn(!!session)
+      // Check if user is admin (you can customize this logic)
+      setIsAdmin(!!session)
+    } catch (err) {
+      // Erro ao verificar sessão - assume não logado
+      setIsLoggedIn(false)
+      setIsAdmin(false)
+    }
+  }, [supabase])
+
   useEffect(() => {
     // Verificar se Supabase está configurado antes de tentar usar
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
@@ -45,20 +58,7 @@ function HeaderContent() {
       // Erro ao configurar listener - ignora
       console.error('Error setting up auth listener:', err)
     }
-  }, [])
-
-  const checkSession = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      setIsLoggedIn(!!session)
-      // Check if user is admin (you can customize this logic)
-      setIsAdmin(!!session)
-    } catch (err) {
-      // Erro ao verificar sessão - assume não logado
-      setIsLoggedIn(false)
-      setIsAdmin(false)
-    }
-  }
+  }, [checkSession, supabase])
 
   const handleLogout = async () => {
     try {

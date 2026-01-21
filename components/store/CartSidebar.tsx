@@ -1,6 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
+import Image from 'next/image'
 import { X, ShoppingBag, Trash2 } from 'lucide-react'
 import { Product } from '@/lib/types'
 
@@ -86,9 +87,11 @@ export default function CartSidebar({
                   >
                     <div className="flex gap-4">
                       {item.image_urls?.[0] && (
-                        <img
+                        <Image
                           src={item.image_urls[0]}
                           alt={item.name}
+                          width={80}
+                          height={80}
                           className="w-20 h-20 object-cover rounded border border-cyber-border"
                         />
                       )}

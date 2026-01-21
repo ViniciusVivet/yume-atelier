@@ -1,5 +1,5 @@
 export async function withTimeout<T>(
-  promise: Promise<T>,
+  promise: PromiseLike<T>,
   ms: number,
   label = 'operation'
 ): Promise<T> {
@@ -12,7 +12,8 @@ export async function withTimeout<T>(
   })
 
   try {
-    return await Promise.race([promise, timeoutPromise])
+    const safePromise = Promise.resolve(promise)
+    return await Promise.race([safePromise, timeoutPromise])
   } finally {
     if (timeoutId) clearTimeout(timeoutId)
   }

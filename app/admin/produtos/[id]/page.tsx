@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -32,20 +32,13 @@ export default function AdminProductEditPage() {
     display_order: 0,
   })
 
-  useEffect(() => {
-    fetchCategories()
-    if (!isNew) {
-      fetchProduct()
-    }
-  }, [productId])
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     const supabase = createClient()
     const { data } = await supabase.from('categories').select('*').order('display_order')
     if (data) setCategories(data as Category[])
-  }
+  }, [])
 
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
     const supabase = createClient()
     const { data } = await supabase
       .from('products')
@@ -57,7 +50,14 @@ export default function AdminProductEditPage() {
       setFormData(data as Product)
     }
     setLoading(false)
-  }
+  }, [productId])
+
+  useEffect(() => {
+    fetchCategories()
+    if (!isNew) {
+      fetchProduct()
+    }
+  }, [fetchCategories, fetchProduct, isNew])
 
   const generateSlug = (name: string) => {
     return name

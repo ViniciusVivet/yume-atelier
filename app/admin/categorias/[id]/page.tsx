@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -23,13 +23,7 @@ export default function AdminCategoryEditPage() {
     display_order: 0,
   })
 
-  useEffect(() => {
-    if (!isNew) {
-      fetchCategory()
-    }
-  }, [categoryId])
-
-  const fetchCategory = async () => {
+  const fetchCategory = useCallback(async () => {
     const supabase = createClient()
     const { data } = await supabase
       .from('categories')
@@ -41,7 +35,13 @@ export default function AdminCategoryEditPage() {
       setFormData(data as Category)
     }
     setLoading(false)
-  }
+  }, [categoryId])
+
+  useEffect(() => {
+    if (!isNew) {
+      fetchCategory()
+    }
+  }, [fetchCategory, isNew])
 
   const generateSlug = (name: string) => {
     return name

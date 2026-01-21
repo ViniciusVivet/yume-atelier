@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { Upload, X, Loader2 } from 'lucide-react'
 import { useToast } from '@/contexts/ToastContext'
@@ -146,11 +147,15 @@ export default function ImageUpload({
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {previewUrls.map((url, index) => (
             <div key={index} className="relative group">
-              <img
-                src={url}
-                alt={`Preview ${index + 1}`}
-                className="w-full h-32 object-cover rounded-lg border border-cyber-border"
-              />
+              <div className="relative w-full h-32 rounded-lg border border-cyber-border overflow-hidden">
+                <Image
+                  src={url}
+                  alt={`Preview ${index + 1}`}
+                  fill
+                  sizes="(min-width: 768px) 25vw, 50vw"
+                  className="object-cover"
+                />
+              </div>
               <button
                 onClick={() => removeImage(index)}
                 className="absolute top-2 right-2 p-1 rounded-full bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-opacity"
