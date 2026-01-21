@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from 'lucide-react'
-import { Toast as ToastType } from '@/contexts/ToastContext'
+import { Toast as ToastType, useToast } from '@/contexts/ToastContext'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface ToastProps {
@@ -76,10 +76,6 @@ export default function Toast({ toast, onRemove }: ToastProps) {
     </motion.div>
   )
 }
-
-'use client'
-
-import { useToast } from '@/contexts/ToastContext'
 
 export function ToastContainer() {
   const { toasts, removeToast } = useToast()
