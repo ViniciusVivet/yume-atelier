@@ -36,7 +36,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     category = categoryResult.data
 
     // Fetch products in this category
-    const productsResult = await withTimeout(
+    const productsResult = (await withTimeout(
       supabase
         .from('products')
         .select(
@@ -49,9 +49,9 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         .order('display_order', { ascending: true }),
       2500,
       'fetch category products'
-    )
+    )) as { data: Product[] | null }
 
-    products = (productsResult.data as Product[]) || []
+    products = productsResult.data || []
 
     // Fetch site settings for WhatsApp
     const settingsResult = await withTimeout(
