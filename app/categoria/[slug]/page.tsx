@@ -2,7 +2,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import StoreLayout from '@/components/store/StoreLayout'
-import { Product, Category } from '@/lib/types'
+import { Product, Category, SiteSettings } from '@/lib/types'
 import { ArrowLeft } from 'lucide-react'
 import { withTimeout } from '@/lib/utils/withTimeout'
 import { demoCategories, getDemoCategory, getDemoProductsByCategorySlug } from '@/lib/demo/demoData'
@@ -54,11 +54,11 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     products = productsResult.data || []
 
     // Fetch site settings for WhatsApp
-    const settingsResult = await withTimeout(
+    const settingsResult = (await withTimeout(
       supabase.from('site_settings').select('*').single(),
       2500,
       'fetch site settings'
-    )
+    )) as { data: SiteSettings | null }
     
     settings = settingsResult.data
   } catch (err) {
