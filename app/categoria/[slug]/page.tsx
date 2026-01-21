@@ -2,7 +2,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import StoreLayout from '@/components/store/StoreLayout'
-import { Product } from '@/lib/types'
+import { Product, Category } from '@/lib/types'
 import { ArrowLeft } from 'lucide-react'
 import { withTimeout } from '@/lib/utils/withTimeout'
 import { demoCategories, getDemoCategory, getDemoProductsByCategorySlug } from '@/lib/demo/demoData'
@@ -15,7 +15,7 @@ interface CategoryPageProps {
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
-  let category = null
+  let category: Category | null = null
   let products: Product[] = []
   let settings = null
 
@@ -27,7 +27,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       supabase.from('categories').select('*').eq('slug', params.slug).single(),
       2500,
       'fetch category'
-    )) as { data: typeof category | null }
+    )) as { data: Category | null }
 
     if (!categoryResult.data) {
       notFound()
