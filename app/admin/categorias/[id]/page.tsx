@@ -12,6 +12,7 @@ export default function AdminCategoryEditPage() {
   const params = useParams()
   const categoryId = params.id as string
   const isNew = categoryId === 'nova'
+  const { addToast } = useToast()
 
   const [loading, setLoading] = useState(!isNew)
   const [formData, setFormData] = useState<Partial<Category>>({
