@@ -22,9 +22,22 @@ export default function InventoryCarousel({
 }: InventoryCarouselProps) {
   const [focusedIndex, setFocusedIndex] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
+  const safeProducts = Array.isArray(products) ? products : []
+  const hasProducts = safeProducts.length > 0
+
+  const focusedProduct = hasProducts ? safeProducts[focusedIndex] || safeProducts[0] : undefined
+  const circleProducts = safeProducts
+    .filter((_, index) => index !== focusedIndex)
+    .slice(0, ITEMS_IN_CIRCLE)
+
+  useEffect(() => {
+    if (hasProducts && onProductChange && focusedProduct) {
+      onProductChange(focusedProduct)
+    }
+  }, [focusedIndex, focusedProduct, hasProducts, onProductChange])
 
   // Safety check: ensure products is an array
-  if (!products || !Array.isArray(products) || products.length === 0) {
+  if (!hasProducts) {
     return (
       <div className="relative w-full h-screen overflow-hidden flex items-center justify-center">
         <div className="text-center space-y-4 z-50">
@@ -39,26 +52,17 @@ export default function InventoryCarousel({
     )
   }
 
-  const focusedProduct = products[focusedIndex] || products[0]
-  const circleProducts = products.filter((_, index) => index !== focusedIndex).slice(0, ITEMS_IN_CIRCLE)
-
-  useEffect(() => {
-    if (onProductChange && focusedProduct) {
-      onProductChange(focusedProduct)
-    }
-  }, [focusedIndex, focusedProduct, onProductChange])
-
   const handleNext = () => {
-    setFocusedIndex((prev) => (prev + 1) % products.length)
+    setFocusedIndex((prev) => (prev + 1) % safeProducts.length)
   }
 
   const handlePrevious = () => {
-    setFocusedIndex((prev) => (prev - 1 + products.length) % products.length)
+    setFocusedIndex((prev) => (prev - 1 + safeProducts.length) % safeProducts.length)
   }
 
   const handleProductClick = (index: number) => {
     // Find the actual index in the original products array
-    const actualIndex = products.findIndex((p) => p.id === circleProducts[index]?.id)
+    const actualIndex = safeProducts.findIndex((p) => p.id === circleProducts[index]?.id)
     if (actualIndex !== -1) {
       setFocusedIndex(actualIndex)
     }
@@ -195,7 +199,7 @@ export default function InventoryCarousel({
 
       {/* Product indicator dots */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 flex gap-2">
-        {products.map((_, index) => (
+        {safeProducts.map((_, index) => (
           <button
             key={index}
             className={`
