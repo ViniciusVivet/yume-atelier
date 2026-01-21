@@ -23,11 +23,11 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     const supabase = createServerClient()
 
     // Fetch category
-    const categoryResult = await withTimeout(
+    const categoryResult = (await withTimeout(
       supabase.from('categories').select('*').eq('slug', params.slug).single(),
       2500,
       'fetch category'
-    )
+    )) as { data: typeof category | null }
 
     if (!categoryResult.data) {
       notFound()
