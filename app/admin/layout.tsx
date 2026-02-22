@@ -9,17 +9,12 @@ export default async function AdminLayout({
   children: React.ReactNode
 }) {
   const supabase = createServerClient()
-  
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  // Redirect if not logged in
-  if (!session) {
+  if (!user) {
     redirect('/login')
   }
 
-  // Check if user is admin
   const isAdmin = await isAdminServer()
   if (!isAdmin) {
     redirect('/login?error=access_denied')
@@ -27,7 +22,7 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen bg-cyber-dark">
-      {session && (
+      {user && (
         <div className="border-b border-cyber-border bg-cyber-light/30 backdrop-blur-xl">
           <div className="container mx-auto px-8 py-4">
             <div className="flex items-center justify-between">

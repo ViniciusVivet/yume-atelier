@@ -34,8 +34,8 @@ export async function middleware(request: NextRequest) {
     },
   })
 
-  // Refresh + sync cookies (important)
-  await supabase.auth.getSession()
+  // Refresh + sync cookies para o server ver a sessao apos login
+  await supabase.auth.getUser()
 
   return response
 }

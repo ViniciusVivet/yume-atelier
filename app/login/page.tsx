@@ -140,7 +140,8 @@ export default function LoginPage() {
           }
 
           if (adminCheck) {
-            window.location.href = '/admin'
+            setLoading(false)
+            setTimeout(() => { window.location.href = '/admin' }, 150)
             return
           } else {
             window.location.href = '/'
