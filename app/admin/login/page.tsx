@@ -39,8 +39,8 @@ export default function AdminLoginPage() {
         .maybeSingle()
 
       if (adminCheck) {
-        router.push('/admin')
-        router.refresh()
+        window.location.href = '/admin'
+        return
       } else {
         setError('Acesso negado. Você precisa ser um administrador.')
         setLoading(false)

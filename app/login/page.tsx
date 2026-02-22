@@ -114,11 +114,11 @@ export default function LoginPage() {
           }
 
           if (adminCheck) {
-            router.push('/admin')
-            router.refresh()
+            window.location.href = '/admin'
+            return
           } else {
-            router.push('/')
-            router.refresh()
+            window.location.href = '/'
+            return
           }
         } else {
           setLoginError(setError, 'Sessão não foi criada. Tente fazer login novamente.', { phase: 'session', error: 'No session after signIn' })
