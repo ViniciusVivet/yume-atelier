@@ -12,7 +12,7 @@ const LOG_PREFIX = '[YUME Login]'
 function setLoginError(
   setError: (s: string) => void,
   userMessage: string,
-  technical: { phase: string; error: unknown }
+  technical: { phase: string; error: unknown; status?: number; code?: string }
 ) {
   if (typeof window !== 'undefined') {
     console.error(LOG_PREFIX, userMessage, technical)
