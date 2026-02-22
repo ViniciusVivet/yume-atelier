@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase/server'
-import { isAdminServer } from '@/lib/utils/admin'
+import { isAdminServer } from '@/lib/utils/admin-server'
 import Link from 'next/link'
 
 export default async function AdminLayout({
