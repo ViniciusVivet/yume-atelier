@@ -1,6 +1,6 @@
 import { createServerClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
-import { isAdminServer } from '@/lib/utils/admin-server'
+import { getAuthUserFromRequest, isAdminByEmail } from '@/lib/utils/api-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { getStoragePathFromPublicUrl, isSupabaseStorageUrl } from '@/lib/utils/storage'
 
@@ -31,15 +31,14 @@ export async function GET(
   return NextResponse.json(data)
 }
 
-// PUT - Update product (service role para evitar 403 RLS)
+// PUT - Update product (user por cookie ou Bearer token)
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const serverSupabase = createServerClient()
-  const { data: { user } } = await serverSupabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const isAdmin = await isAdminServer()
+  const user = await getAuthUserFromRequest(request)
+  if (!user?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const isAdmin = await isAdminByEmail(user.email)
   if (!isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const body = await request.json()
@@ -55,15 +54,14 @@ export async function PUT(
   return NextResponse.json(data)
 }
 
-// DELETE - Delete product and its images/video from Storage (service role para evitar 403 RLS)
+// DELETE - Delete product (user por cookie ou Bearer token)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const serverSupabase = createServerClient()
-  const { data: { user } } = await serverSupabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const isAdmin = await isAdminServer()
+  const user = await getAuthUserFromRequest(request)
+  if (!user?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const isAdmin = await isAdminByEmail(user.email)
   if (!isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const supabase = createServiceRoleClient()

@@ -93,11 +93,14 @@ export default function AdminProductEditPage() {
     }
 
     const payload = { ...formData, slug }
+    const { data: { session } } = await supabase.auth.getSession()
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
 
     if (isNew) {
       const res = await fetch('/api/products', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         credentials: 'include',
         body: JSON.stringify(payload),
       })
@@ -111,7 +114,7 @@ export default function AdminProductEditPage() {
     } else {
       const res = await fetch(`/api/products/${productId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         credentials: 'include',
         body: JSON.stringify(payload),
       })

@@ -1,6 +1,6 @@
 import { createServerClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
-import { isAdminServer } from '@/lib/utils/admin-server'
+import { getAuthUserFromRequest, isAdminByEmail } from '@/lib/utils/api-auth'
 import { NextRequest, NextResponse } from 'next/server'
 
 // GET - List all products
@@ -14,12 +14,11 @@ export async function GET(request: NextRequest) {
   return NextResponse.json(data)
 }
 
-// POST - Create new product (usa service role para evitar 403 por RLS)
+// POST - Create new product (user por cookie ou Bearer token)
 export async function POST(request: NextRequest) {
-  const serverSupabase = createServerClient()
-  const { data: { user } } = await serverSupabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const isAdmin = await isAdminServer()
+  const user = await getAuthUserFromRequest(request)
+  if (!user?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const isAdmin = await isAdminByEmail(user.email)
   if (!isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const body = await request.json()
