@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { Home } from 'lucide-react'
+import { isAdminClient } from '@/lib/utils/admin'
 
 const LOG_PREFIX = '[YUME Login]'
 
@@ -26,8 +26,31 @@ export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const [checkingAuth, setCheckingAuth] = useState(true)
   const supabase = createClient()
+
+  // Se ja estiver logado, redireciona (admin -> /admin, user -> /)
+  useEffect(() => {
+    let cancelled = false
+    async function redirectIfLoggedIn() {
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        setCheckingAuth(false)
+        return
+      }
+      const { data: { session } } = await supabase.auth.getSession()
+      if (cancelled) return
+      if (!session) {
+        setCheckingAuth(false)
+        return
+      }
+      const admin = await isAdminClient()
+      if (cancelled) return
+      if (admin) window.location.href = '/admin'
+      else window.location.href = '/'
+    }
+    redirectIfLoggedIn()
+    return () => { cancelled = true }
+  }, [supabase])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -72,8 +95,8 @@ export default function LoginPage() {
 
         if (data.user) {
           if (data.session) {
-            router.push('/')
-            router.refresh()
+            window.location.href = '/'
+            return
           } else {
             setError('✅ Conta criada! Verifique seu email para confirmar. Após confirmar, peça ao administrador para liberar seu acesso ao painel.')
             setTimeout(() => setIsSignUp(false), 5000)
@@ -134,6 +157,14 @@ export default function LoginPage() {
       setLoginError(setError, userMsg, { phase: 'catch', error: err })
       setLoading(false)
     }
+  }
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-cyber-dark">
+        <p className="text-cyber-textDim">Carregando...</p>
+      </div>
+    )
   }
 
   return (
