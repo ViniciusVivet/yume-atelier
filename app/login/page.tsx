@@ -29,7 +29,7 @@ export default function LoginPage() {
   const [checkingAuth, setCheckingAuth] = useState(true)
   const supabase = createClient()
 
-  // Se ja estiver logado, redireciona (admin -> /admin, user -> /)
+  // So redireciona user comum para / (evita loop com admin layout no server)
   useEffect(() => {
     let cancelled = false
     async function redirectIfLoggedIn() {
@@ -45,8 +45,11 @@ export default function LoginPage() {
       }
       const admin = await isAdminClient()
       if (cancelled) return
-      if (admin) window.location.href = '/admin'
-      else window.location.href = '/'
+      if (admin) {
+        setCheckingAuth(false)
+        return
+      }
+      window.location.href = '/'
     }
     redirectIfLoggedIn()
     return () => { cancelled = true }
