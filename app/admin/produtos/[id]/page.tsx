@@ -72,7 +72,6 @@ export default function AdminProductEditPage() {
     e.preventDefault()
     setLoading(true)
 
-    const supabase = createClient()
     const slug = formData.slug?.trim() || (formData.name ? generateSlug(formData.name) : '')
     if (!slug) {
       addToast('error', 'Slug é obrigatório (ou preencha o nome para gerar automaticamente).')
@@ -80,6 +79,7 @@ export default function AdminProductEditPage() {
       return
     }
 
+    const supabase = createClient()
     const { data: existing } = await supabase
       .from('products')
       .select('id')
@@ -95,21 +95,29 @@ export default function AdminProductEditPage() {
     const payload = { ...formData, slug }
 
     if (isNew) {
-      const { error } = await supabase.from('products').insert(payload)
-      if (error) {
-        addToast('error', `Erro ao criar produto: ${error.message}`)
+      const res = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        addToast('error', json.error ? `Erro ao criar produto: ${json.error}` : 'Erro ao criar produto.')
         setLoading(false)
         return
       }
       addToast('success', 'Produto criado com sucesso!')
     } else {
-      const { error } = await supabase
-        .from('products')
-        .update(payload)
-        .eq('id', productId)
-
-      if (error) {
-        addToast('error', `Erro ao atualizar produto: ${error.message}`)
+      const res = await fetch(`/api/products/${productId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        addToast('error', json.error ? `Erro ao atualizar produto: ${json.error}` : 'Erro ao atualizar produto.')
         setLoading(false)
         return
       }
