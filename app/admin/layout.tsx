@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase/server'
+import { isAdminServer } from '@/lib/utils/admin'
 import Link from 'next/link'
 
 export default async function AdminLayout({
@@ -13,9 +14,15 @@ export default async function AdminLayout({
     data: { session },
   } = await supabase.auth.getSession()
 
-  // Only redirect if not on login page (login page doesn't use this layout)
+  // Redirect if not logged in
   if (!session) {
     redirect('/login')
+  }
+
+  // Check if user is admin
+  const isAdmin = await isAdminServer()
+  if (!isAdmin) {
+    redirect('/login?error=access_denied')
   }
 
   return (

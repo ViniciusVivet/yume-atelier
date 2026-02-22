@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { createServerClient } from '@/lib/supabase/server'
 import StoreLayout from '@/components/store/StoreLayout'
 import HeroLanding from '@/components/landing/HeroLanding'
@@ -6,7 +7,23 @@ import { withTimeout } from '@/lib/utils/withTimeout'
 import { demoProducts, demoCategories } from '@/lib/demo/demoData'
 import DemoBanner from '@/components/landing/DemoBanner'
 
-const FETCH_TIMEOUT = 3000; // 3 seconds
+const FETCH_TIMEOUT = 3000
+
+export async function generateMetadata(): Promise<Metadata> {
+  try {
+    const supabase = createServerClient()
+    const { data } = await supabase.from('site_settings').select('site_title, site_description').single()
+    const title = (data as { site_title?: string })?.site_title || 'YUME Atelier'
+    const description = (data as { site_description?: string })?.site_description || 'Ateliê de moda disruptiva. Catálogo premium.'
+    return {
+      title,
+      description,
+      openGraph: { title, description },
+    }
+  } catch {
+    return { title: 'YUME Atelier', description: 'Ateliê de moda disruptiva.' }
+  }
+}
 
 export default async function HomePage() {
   let products: Product[] = []
@@ -50,21 +67,21 @@ export default async function HomePage() {
         )
       ])
 
-      if (productsResult.status === 'fulfilled' && productsResult.value.data) {
-        products = productsResult.value.data as Product[]
+      if (productsResult.status === 'fulfilled' && (productsResult.value as { data?: Product[] }).data) {
+        products = (productsResult.value as { data: Product[] }).data
         if (products.length > 0) hasRealProducts = true;
       } else if (productsResult.status === 'rejected') {
         console.error('Error fetching products:', productsResult.reason);
       }
 
-      if (settingsResult.status === 'fulfilled' && settingsResult.value.data) {
-        settings = settingsResult.value.data as SiteSettings
+      if (settingsResult.status === 'fulfilled' && (settingsResult.value as { data?: SiteSettings }).data) {
+        settings = (settingsResult.value as { data: SiteSettings }).data
       } else if (settingsResult.status === 'rejected') {
         console.error('Error fetching settings:', settingsResult.reason);
       }
 
-      if (categoriesResult.status === 'fulfilled' && categoriesResult.value.data) {
-        categories = categoriesResult.value.data as Category[]
+      if (categoriesResult.status === 'fulfilled' && (categoriesResult.value as { data?: Category[] }).data) {
+        categories = (categoriesResult.value as { data: Category[] }).data
       } else if (categoriesResult.status === 'rejected') {
         console.error('Error fetching categories:', categoriesResult.reason);
       }

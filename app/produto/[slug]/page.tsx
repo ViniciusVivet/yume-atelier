@@ -1,8 +1,8 @@
+import type { Metadata } from 'next'
 import { createServerClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import ProductFocus from '@/components/inventory/ProductFocus'
-import WhatsAppCTA from '@/components/ui/WhatsAppCTA'
 import { Product } from '@/lib/types'
 import { ArrowLeft } from 'lucide-react'
 import { withTimeout } from '@/lib/utils/withTimeout'
@@ -10,8 +10,44 @@ import { getDemoProductBySlug } from '@/lib/demo/demoData'
 import DemoBanner from '@/components/landing/DemoBanner'
 
 interface ProductPageProps {
-  params: {
-    slug: string
+  params: { slug: string }
+}
+
+export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
+  try {
+    const supabase = createServerClient()
+    const { data } = await supabase
+      .from('products')
+      .select('name, description, image_urls')
+      .eq('slug', params.slug)
+      .single()
+    if (!data) {
+      const demo = getDemoProductBySlug(params.slug)
+      if (demo) {
+        return {
+          title: `${demo.name} | YUME Atelier`,
+          description: demo.description?.slice(0, 160) || undefined,
+          openGraph: {
+            title: demo.name,
+            description: demo.description?.slice(0, 160),
+            images: demo.image_urls?.[0] ? [demo.image_urls[0]] : undefined,
+          },
+        }
+      }
+      return { title: 'Produto | YUME Atelier' }
+    }
+    const p = data as { name: string; description?: string; image_urls?: string[] }
+    return {
+      title: `${p.name} | YUME Atelier`,
+      description: (p.description || '').slice(0, 160),
+      openGraph: {
+        title: p.name,
+        description: (p.description || '').slice(0, 160),
+        images: p.image_urls?.[0] ? [p.image_urls[0]] : undefined,
+      },
+    }
+  } catch {
+    return { title: 'Produto | YUME Atelier' }
   }
 }
 
@@ -36,7 +72,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         .single(),
       2500,
       'fetch product'
-    )
+    ) as { data: Product | null }
 
     if (!productResult.data) {
       notFound()
@@ -49,8 +85,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
       supabase.from('site_settings').select('*').single(),
       2500,
       'fetch site settings'
-    )
-    
+    ) as { data: { whatsapp_number?: string; whatsapp_message_template?: string } | null }
+
     settings = settingsResult.data
   } catch (err) {
     console.error('Error fetching product:', err)

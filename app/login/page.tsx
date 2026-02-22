@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
@@ -14,6 +14,14 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+
+  // Verificar se há erro na URL (ex: acesso negado)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('error') === 'access_denied') {
+      setError('⚠️ Acesso negado. Você precisa ser um administrador para acessar o painel admin.')
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -58,15 +66,17 @@ export default function LoginPage() {
         }
 
         if (data.user) {
-          // Se o Supabase não exigir confirmação de email, já faz login
+          // Conta criada - NÃO dá acesso admin automaticamente
+          // Usuário precisa ser adicionado à tabela admin_users pelo admin
           if (data.session) {
-            router.push('/admin')
+            // Se já tem sessão (sem confirmação de email), redireciona para home
+            router.push('/')
             router.refresh()
           } else {
-            setError('✅ Conta criada! Verifique seu email para confirmar e depois faça login.')
+            setError('✅ Conta criada! Verifique seu email para confirmar. Após confirmar, entre em contato com o administrador para obter acesso ao painel admin.')
             setTimeout(() => {
               setIsSignUp(false)
-            }, 3000)
+            }, 5000)
           }
         }
       } else {
@@ -94,9 +104,22 @@ export default function LoginPage() {
         }
 
         if (data.session) {
-          // Check if admin (you can customize this - check email or user metadata)
-          router.push('/admin')
-          router.refresh()
+          // Verificar se é admin antes de redirecionar
+          const { data: adminCheck } = await supabase
+            .from('admin_users')
+            .select('email')
+            .eq('email', email)
+            .maybeSingle()
+
+          if (adminCheck) {
+            // É admin - redireciona para admin
+            router.push('/admin')
+            router.refresh()
+          } else {
+            // Não é admin - redireciona para home
+            router.push('/')
+            router.refresh()
+          }
         } else {
           setError('Erro: sessão não criada. Tente novamente.')
           setLoading(false)

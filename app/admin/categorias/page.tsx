@@ -25,13 +25,13 @@ export default function AdminCategoriesPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir esta categoria?')) return
+    if (!confirm('Tem certeza que deseja excluir esta categoria? A imagem de fundo também será removida do servidor.')) return
 
-    const supabase = createClient()
-    const { error } = await supabase.from('categories').delete().eq('id', id)
+    const res = await fetch(`/api/categories/${id}`, { method: 'DELETE' })
+    const data = await res.json().catch(() => ({}))
 
-    if (error) {
-      alert('Erro ao excluir: ' + error.message)
+    if (!res.ok) {
+      alert(data.error || 'Erro ao excluir categoria')
       return
     }
 

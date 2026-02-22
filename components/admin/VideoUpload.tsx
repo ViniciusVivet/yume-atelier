@@ -17,6 +17,7 @@ export default function VideoUpload({
   const [uploading, setUploading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(existingUrl)
   const [dragActive, setDragActive] = useState(false)
+  const { addToast } = useToast()
 
   const handleFile = async (files: FileList | null) => {
     if (!files || files.length === 0) return

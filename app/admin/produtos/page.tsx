@@ -30,13 +30,13 @@ export default function AdminProductsPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir este produto?')) return
+    if (!confirm('Tem certeza que deseja excluir este produto? As imagens também serão removidas do servidor.')) return
 
-    const supabase = createClient()
-    const { error } = await supabase.from('products').delete().eq('id', id)
+    const res = await fetch(`/api/products/${id}`, { method: 'DELETE' })
+    const data = await res.json().catch(() => ({}))
 
-    if (error) {
-      addToast('error', `Erro ao excluir produto: ${error.message}`)
+    if (!res.ok) {
+      addToast('error', data.error || 'Erro ao excluir produto')
       return
     }
 

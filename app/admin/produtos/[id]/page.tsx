@@ -73,14 +73,29 @@ export default function AdminProductEditPage() {
     setLoading(true)
 
     const supabase = createClient()
-    
-    // Generate slug if not provided
-    if (!formData.slug && formData.name) {
-      formData.slug = generateSlug(formData.name)
+    const slug = formData.slug?.trim() || (formData.name ? generateSlug(formData.name) : '')
+    if (!slug) {
+      addToast('error', 'Slug é obrigatório (ou preencha o nome para gerar automaticamente).')
+      setLoading(false)
+      return
     }
 
+    const { data: existing } = await supabase
+      .from('products')
+      .select('id')
+      .eq('slug', slug)
+      .maybeSingle()
+
+    if (existing && (isNew || existing.id !== productId)) {
+      addToast('error', 'Já existe outro produto com este slug. Escolha outro.')
+      setLoading(false)
+      return
+    }
+
+    const payload = { ...formData, slug }
+
     if (isNew) {
-      const { error } = await supabase.from('products').insert(formData)
+      const { error } = await supabase.from('products').insert(payload)
       if (error) {
         addToast('error', `Erro ao criar produto: ${error.message}`)
         setLoading(false)
@@ -90,9 +105,9 @@ export default function AdminProductEditPage() {
     } else {
       const { error } = await supabase
         .from('products')
-        .update(formData)
+        .update(payload)
         .eq('id', productId)
-      
+
       if (error) {
         addToast('error', `Erro ao atualizar produto: ${error.message}`)
         setLoading(false)

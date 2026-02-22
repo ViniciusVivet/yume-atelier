@@ -31,8 +31,20 @@ export default function AdminLoginPage() {
     }
 
     if (data.session) {
-      router.push('/admin')
-      router.refresh()
+      // Verificar se é admin antes de redirecionar
+      const { data: adminCheck } = await supabase
+        .from('admin_users')
+        .select('email')
+        .eq('email', email)
+        .maybeSingle()
+
+      if (adminCheck) {
+        router.push('/admin')
+        router.refresh()
+      } else {
+        setError('Acesso negado. Você precisa ser um administrador.')
+        setLoading(false)
+      }
     }
   }
 

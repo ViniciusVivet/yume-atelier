@@ -1,43 +1,74 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { Upload, X, Loader2 } from 'lucide-react'
 import { useToast } from '@/contexts/ToastContext'
+import { getStoragePathFromPublicUrl, isSupabaseStorageUrl } from '@/lib/utils/storage'
+
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+const MAX_SIZE_BYTES = 5 * 1024 * 1024 // 5MB
 
 interface ImageUploadProps {
   onUploadComplete: (urls: string[]) => void
   existingUrls?: string[]
   multiple?: boolean
+  /** Pasta no bucket (ex: 'products' | 'categories') */
+  folder?: string
 }
 
 export default function ImageUpload({ 
   onUploadComplete, 
   existingUrls = [], 
-  multiple = true 
+  multiple = true,
+  folder = 'products',
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [previewUrls, setPreviewUrls] = useState<string[]>(existingUrls)
   const [dragActive, setDragActive] = useState(false)
   const { addToast } = useToast()
 
+  useEffect(() => {
+    setPreviewUrls(existingUrls)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existingUrls.join(',')])
+
   const handleFile = async (files: FileList | null) => {
     if (!files || files.length === 0) return
 
-    setUploading(true)
     const supabase = createClient()
+    if (!supabase.storage) {
+      addToast('error', 'Storage não configurado.')
+      return
+    }
+
+    const toUpload: File[] = []
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        addToast('error', `"${file.name}": apenas imagens (JPG, PNG, WebP, GIF).`)
+        continue
+      }
+      if (file.size > MAX_SIZE_BYTES) {
+        addToast('error', `"${file.name}": tamanho máximo 5MB.`)
+        continue
+      }
+      toUpload.push(file)
+    }
+    if (toUpload.length === 0) return
+
+    setUploading(true)
     const uploadedUrls: string[] = []
 
     try {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i]
+      for (let i = 0; i < toUpload.length; i++) {
+        const file = toUpload[i]
         const fileExt = file.name.split('.').pop()
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-        const filePath = `products/${fileName}`
+        const filePath = `${folder}/${fileName}`
 
-        // Upload to Supabase Storage
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('yume-atelier')
           .upload(filePath, file, {
             cacheControl: '3600',
@@ -50,11 +81,9 @@ export default function ImageUpload({
           continue
         }
 
-        // Get public URL
         const { data: { publicUrl } } = supabase.storage
           .from('yume-atelier')
           .getPublicUrl(filePath)
-
         uploadedUrls.push(publicUrl)
       }
 
@@ -86,7 +115,22 @@ export default function ImageUpload({
     handleFile(e.dataTransfer.files)
   }
 
-  const removeImage = (index: number) => {
+  const removeImage = async (index: number) => {
+    const url = previewUrls[index]
+    const supabase = createClient()
+
+    if (url && isSupabaseStorageUrl(url) && supabase.storage) {
+      const path = getStoragePathFromPublicUrl(url)
+      if (path) {
+        try {
+          await supabase.storage.from('yume-atelier').remove([path])
+        } catch (err) {
+          console.error('Erro ao deletar imagem do Storage:', err)
+          addToast('error', 'Imagem removida da lista, mas falha ao deletar do servidor.')
+        }
+      }
+    }
+
     const newUrls = previewUrls.filter((_, i) => i !== index)
     setPreviewUrls(newUrls)
     onUploadComplete(newUrls)
@@ -135,7 +179,7 @@ export default function ImageUpload({
                 Clique ou arraste imagens aqui
               </p>
               <p className="text-cyber-textDim text-sm">
-                {multiple ? 'Múltiplas imagens suportadas' : 'Uma imagem'}
+                {multiple ? 'Múltiplas imagens suportadas' : 'Uma imagem'} • Máx. 5MB (JPG, PNG, WebP, GIF)
               </p>
             </>
           )}

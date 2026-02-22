@@ -50,10 +50,10 @@ export default async function RootLayout({
           .order('display_order', { ascending: true }),
         2000,
         'fetch nav categories'
-      )
-      
+      ) as { data?: Category[]; error?: unknown } | undefined
+
       if (result?.data && !result.error) {
-        categories = result.data as Category[]
+        categories = result.data
       }
     }
   } catch (err) {
