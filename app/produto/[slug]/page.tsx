@@ -72,7 +72,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         .single(),
       2500,
       'fetch product'
-    ) as { data: Product | null }
+    )) as { data: Product | null }
 
     if (!productResult.data) {
       notFound()
@@ -85,13 +85,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
       supabase.from('site_settings').select('*').single(),
       2500,
       'fetch site settings'
-<<<<<<< HEAD
     )) as { data: { whatsapp_number?: string; whatsapp_message_template?: string } | null }
-    
-=======
-    ) as { data: { whatsapp_number?: string; whatsapp_message_template?: string } | null }
 
->>>>>>> 3de1eb3cb68cca292e7ba1881b145c5d3dc97a2d
     settings = settingsResult.data
   } catch (err) {
     console.error('Error fetching product:', err)
