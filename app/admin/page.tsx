@@ -1,8 +1,10 @@
 import Link from 'next/link'
 import { createServerClient } from '@/lib/supabase/server'
+import { User } from 'lucide-react'
 
 export default async function AdminDashboard() {
   const supabase = createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
   // Fetch stats
   const { count: productCount } = await supabase
@@ -15,6 +17,24 @@ export default async function AdminDashboard() {
 
   return (
     <div className="container mx-auto px-8 py-12">
+      {/* Boas-vindas e perfil do admin */}
+      <section className="mb-10 pb-8 border-b border-cyber-border">
+        <h1 className="text-2xl md:text-3xl font-display font-bold text-cyber-text mb-1">
+          Bem-vindo(a) ao painel
+        </h1>
+        <p className="text-cyber-textDim mb-4">
+          Gerencie sua loja, produtos e configuracoes.
+        </p>
+        <div className="inline-flex items-center gap-3 px-4 py-3 rounded-lg bg-cyber-light/20 border border-cyber-border">
+          <User className="w-5 h-5 text-cyber-glow" />
+          <div>
+            <p className="text-xs text-cyber-textDim uppercase tracking-wider">Conta admin</p>
+            <p className="text-cyber-text font-medium">{user?.email ?? '—'}</p>
+          </div>
+        </div>
+      </section>
+
+      <h2 className="text-lg font-semibold text-cyber-textDim mb-4">Resumo da loja</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         <div className="bg-cyber-light/30 border border-cyber-border rounded-lg p-6 backdrop-blur-sm">
           <h3 className="text-cyber-textDim text-sm uppercase tracking-wider mb-2">

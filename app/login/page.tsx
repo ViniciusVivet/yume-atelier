@@ -1,10 +1,24 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { Home } from 'lucide-react'
+import { isAdminClient } from '@/lib/utils/admin'
+
+const LOG_PREFIX = '[YUME Login]'
+
+/** Mensagem amigável para o usuário + log técnico no console (F12) */
+function setLoginError(
+  setError: (s: string) => void,
+  userMessage: string,
+  technical: { phase: string; error: unknown; status?: number; code?: string }
+) {
+  if (typeof window !== 'undefined') {
+    console.error(LOG_PREFIX, userMessage, technical)
+  }
+  setError(userMessage)
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -12,8 +26,41 @@ export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const [checkingAuth, setCheckingAuth] = useState(true)
   const supabase = createClient()
+
+  // So redireciona user comum para / (evita loop com admin layout no server)
+  useEffect(() => {
+    let cancelled = false
+    async function redirectIfLoggedIn() {
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        setCheckingAuth(false)
+        return
+      }
+      const { data: { session } } = await supabase.auth.getSession()
+      if (cancelled) return
+      if (!session) {
+        setCheckingAuth(false)
+        return
+      }
+      const admin = await isAdminClient()
+      if (cancelled) return
+      if (admin) {
+        setCheckingAuth(false)
+        return
+      }
+      window.location.href = '/'
+    }
+    redirectIfLoggedIn()
+    return () => { cancelled = true }
+  }, [supabase])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('error') === 'access_denied') {
+      setError('⚠️ Acesso negado. Você precisa ser um administrador para acessar o painel admin.')
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -21,103 +68,107 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      // Verificar se Supabase está configurado
       if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-        setError('❌ Supabase não configurado! Verifique o arquivo .env.local e reinicie o servidor (Ctrl+C e depois npm run dev)')
+        setLoginError(
+          setError,
+          'Supabase não configurado. Em produção: confira as variáveis de ambiente na Vercel. Em desenvolvimento: crie o arquivo .env.local.',
+          { phase: 'config', error: 'Missing env vars' }
+        )
         setLoading(false)
         return
       }
 
       if (isSignUp) {
-        // Sign up - criar conta direto pelo site
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/admin`,
-          }
+          options: { emailRedirectTo: `${window.location.origin}/admin` },
         })
 
         if (signUpError) {
-          let errorMessage = signUpError.message
-          
-          // Traduzir erros comuns
-          if (signUpError.message.includes('already registered')) {
-            errorMessage = 'Este email já está cadastrado. Faça login ou use outro email.'
-          } else if (signUpError.message.includes('Invalid email')) {
-            errorMessage = 'Email inválido. Verifique e tente novamente.'
-          } else if (signUpError.message.includes('Password')) {
-            errorMessage = 'Senha muito fraca. Use pelo menos 6 caracteres.'
-          } else if (signUpError.message.includes('fetch') || signUpError.message.includes('network')) {
-            errorMessage = 'Erro de conexão. Verifique se o Supabase está configurado corretamente no .env.local e reinicie o servidor.'
-          }
-          
-          setError(errorMessage)
+          let userMsg = signUpError.message
+          if (signUpError.message.includes('already registered')) userMsg = 'Este email já está cadastrado. Faça login ou use outro email.'
+          else if (signUpError.message.includes('Invalid email')) userMsg = 'Email inválido. Verifique e tente novamente.'
+          else if (signUpError.message.includes('Password')) userMsg = 'Senha muito fraca. Use pelo menos 6 caracteres.'
+          else if (signUpError.message.includes('fetch') || signUpError.message.includes('network')) userMsg = 'Sem conexão com o servidor. Verifique sua internet ou se o Supabase está acessível.'
+          setLoginError(setError, userMsg, { phase: 'signUp', error: signUpError })
           setLoading(false)
           return
         }
 
         if (data.user) {
-          // Se o Supabase não exigir confirmação de email, já faz login
           if (data.session) {
-            router.push('/admin')
-            router.refresh()
+            window.location.href = '/'
+            return
           } else {
-            setError('✅ Conta criada! Verifique seu email para confirmar e depois faça login.')
-            setTimeout(() => {
-              setIsSignUp(false)
-            }, 3000)
+            setError('✅ Conta criada! Verifique seu email para confirmar. Após confirmar, peça ao administrador para liberar seu acesso ao painel.')
+            setTimeout(() => setIsSignUp(false), 5000)
           }
         }
       } else {
-        // Sign in
-        const { data, error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        })
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
 
         if (signInError) {
-          const raw = signInError.message
-          let errorMessage = raw
-
-          // Traduzir erros comuns
-          if (raw.includes('Invalid login credentials')) {
-            errorMessage = 'Email ou senha incorretos. Verifique e tente novamente.'
-          } else if (raw.includes('Email not confirmed')) {
-            errorMessage = 'Email não confirmado. Verifique sua caixa de entrada.'
-          } else if (raw.includes('fetch') || raw.includes('network') || raw.includes('Failed to fetch')) {
-            errorMessage = 'Erro de conexão. Na Vercel: confira variáveis de ambiente (NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY). No Supabase: Authentication → URL Configuration → adicione a URL do site (ex: https://yume-atelier.vercel.app).'
-          } else if (raw.includes('Database') || raw.includes('database') || raw.includes('JWT') || raw.includes('config')) {
-            errorMessage = `Erro de configuração (Supabase/Vercel): "${raw}". Verifique as variáveis na Vercel e a URL do site no Supabase (Authentication → URL Configuration).`
-          }
-
-          console.error('[YUME Login]', errorMessage, '(raw:', raw, ')')
-          setError(errorMessage)
+          const raw = signInError.message || ''
+          let userMsg: string
+          if (raw.includes('Invalid login credentials')) userMsg = 'Email ou senha incorretos. Verifique e tente novamente.'
+          else if (raw.includes('Email not confirmed')) userMsg = 'Email ainda não confirmado. Verifique sua caixa de entrada e clique no link enviado.'
+          else if (raw.includes('Database error') || raw.includes('querying schema') || raw.includes('500')) userMsg = 'Erro temporario no servidor (banco de dados). Tente de novo em alguns segundos. Se persistir, o administrador deve checar Supabase e variaveis na Vercel.'
+          else if (raw.includes('fetch') || raw.includes('network')) userMsg = 'Sem conexao com o servidor. Na Vercel: confira variaveis de ambiente. No Supabase: Authentication -> URL Configuration -> adicione a URL do site (ex: https://yume-atelier.vercel.app).'
+          else userMsg = `Nao foi possivel entrar. (${raw.slice(0, 80)}${raw.length > 80 ? '…' : ''})`
+          setLoginError(setError, userMsg, { phase: 'signIn', error: signInError, status: (signInError as any)?.status })
           setLoading(false)
           return
         }
 
         if (data.session) {
-          // Check if admin (you can customize this - check email or user metadata)
-          router.push('/admin')
-          router.refresh()
+          const { data: adminCheck, error: adminError } = await supabase
+            .from('admin_users')
+            .select('email')
+            .eq('email', email)
+            .maybeSingle()
+
+          if (adminError) {
+            const raw = adminError.message || ''
+            let userMsg: string
+            if (raw.includes('schema') || raw.includes('relation') || raw.includes('does not exist')) userMsg = 'Configuração do painel incompleta: tabela de administradores não encontrada no banco. O administrador do site precisa criar a tabela admin_users no Supabase.'
+            else if (raw.includes('permission') || raw.includes('policy')) userMsg = 'Erro de permissão ao verificar administrador. O administrador do site deve conferir as políticas (RLS) da tabela admin_users no Supabase.'
+            else userMsg = 'Erro ao verificar se você é administrador. Tente novamente; se continuar, o administrador deve checar Supabase (tabela admin_users) e variáveis na Vercel.'
+            setLoginError(setError, userMsg, { phase: 'adminCheck', error: adminError, code: adminError.code })
+            setLoading(false)
+            return
+          }
+
+          if (adminCheck) {
+            setLoading(false)
+            setTimeout(() => { window.location.href = '/admin' }, 150)
+            return
+          } else {
+            window.location.href = '/'
+            return
+          }
         } else {
-          setError('Erro: sessão não criada. Tente novamente.')
+          setLoginError(setError, 'Sessão não foi criada. Tente fazer login novamente.', { phase: 'session', error: 'No session after signIn' })
           setLoading(false)
         }
       }
-    } catch (err: any) {
-      const msg = err?.message || String(err)
-      console.error('[YUME Login] Erro completo:', err)
-      let errorMessage: string
-      if (msg.includes('fetch') || msg.includes('network') || msg.includes('ERR_NAME_NOT_RESOLVED')) {
-        errorMessage = 'Erro de conexão com Supabase. Na Vercel: confira as variáveis de ambiente. No Supabase: Authentication → URL Configuration → adicione a URL do seu site (ex: https://yume-atelier.vercel.app).'
-      } else {
-        errorMessage = `Erro ao processar: ${msg}`
-      }
-      setError(errorMessage)
+    } catch (err: unknown) {
+      const ex = err as Error
+      const msg = ex?.message || String(err)
+      let userMsg: string
+      if (msg.includes('fetch') || msg.includes('network') || msg.includes('ERR_')) userMsg = 'Erro de conexao. Na Vercel confira variaveis de ambiente. No Supabase: Authentication -> URL Configuration -> adicione a URL do site.'
+      else userMsg = 'Ocorreu um erro inesperado. Tente novamente ou contate o suporte.'
+      setLoginError(setError, userMsg, { phase: 'catch', error: err })
       setLoading(false)
     }
+  }
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-cyber-dark">
+        <p className="text-cyber-textDim">Carregando...</p>
+      </div>
+    )
   }
 
   return (

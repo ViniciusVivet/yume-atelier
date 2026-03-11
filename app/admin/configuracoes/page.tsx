@@ -160,6 +160,13 @@ export default function AdminSettingsPage() {
           <p className="text-xs text-cyber-textDim mt-1">
             Use {'{PRODUCT_NAME}'} para incluir o nome do produto automaticamente
           </p>
+          <div className="mt-2 p-3 rounded-lg bg-cyber-darker border border-cyber-border">
+            <p className="text-xs text-cyber-textDim uppercase tracking-wider mb-1">Preview da mensagem:</p>
+            <p className="text-cyber-text text-sm whitespace-pre-wrap break-words">
+              {(formData.whatsapp_message_template || '')
+                .replace(/\{PRODUCT_NAME\}/gi, 'Blusa Jeans Example')}
+            </p>
+          </div>
         </div>
 
         <div>

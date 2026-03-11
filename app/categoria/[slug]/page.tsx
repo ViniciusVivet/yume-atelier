@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { createServerClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
@@ -9,8 +10,32 @@ import { demoCategories, getDemoCategory, getDemoProductsByCategorySlug } from '
 import DemoBanner from '@/components/landing/DemoBanner'
 
 interface CategoryPageProps {
-  params: {
-    slug: string
+  params: { slug: string }
+}
+
+export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
+  try {
+    const supabase = createServerClient()
+    const { data } = await supabase.from('categories').select('name, description').eq('slug', params.slug).single()
+    if (!data) {
+      const demo = getDemoCategory(params.slug)
+      if (demo) {
+        return {
+          title: `${demo.name} | YUME Atelier`,
+          description: (demo.description || '').slice(0, 160),
+          openGraph: { title: demo.name, description: demo.description },
+        }
+      }
+      return { title: 'Categoria | YUME Atelier' }
+    }
+    const c = data as { name: string; description?: string }
+    return {
+      title: `${c.name} | YUME Atelier`,
+      description: (c.description || '').slice(0, 160),
+      openGraph: { title: c.name, description: c.description },
+    }
+  } catch {
+    return { title: 'Categoria | YUME Atelier' }
   }
 }
 

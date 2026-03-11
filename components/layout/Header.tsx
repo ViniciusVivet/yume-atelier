@@ -4,8 +4,9 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { User, LogOut, ShoppingBag, Grid3X3, Search, Instagram, MessageCircle } from 'lucide-react'
+import { User, LogOut, ShoppingBag, Grid3X3, Search, Instagram, MessageCircle, LayoutDashboard } from 'lucide-react'
 import { useCart } from '@/contexts/CartContext'
+import { isAdminClient } from '@/lib/utils/admin'
 import { useSiteSettings } from '@/contexts/SiteSettingsContext'
 import CartSidebar from '@/components/store/CartSidebar'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
@@ -29,10 +30,8 @@ function HeaderContent() {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       setIsLoggedIn(!!session)
-      // Check if user is admin (you can customize this logic)
-      setIsAdmin(!!session)
+      setIsAdmin(session ? await isAdminClient() : false)
     } catch (err) {
-      // Erro ao verificar sessão - assume não logado
       setIsLoggedIn(false)
       setIsAdmin(false)
     }
@@ -187,15 +186,29 @@ function HeaderContent() {
             </Link>
           )}
 
-          {isLoggedIn && isAdmin ? (
+          {isLoggedIn ? (
             <>
-              <Link
-                href="/admin"
-                className="px-4 py-2 rounded-lg bg-cyber-glow/20 border border-cyber-glow/50
-                  text-cyber-glow hover:bg-cyber-glow/30 transition-colors text-sm font-semibold"
-              >
-                Admin
-              </Link>
+              {isAdmin ? (
+                <Link
+                  href="/admin"
+                  className="px-4 py-2 rounded-lg bg-cyber-glow/20 border border-cyber-glow/50
+                    text-cyber-glow hover:bg-cyber-glow/30 transition-colors text-sm font-semibold
+                    flex items-center gap-2"
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  Painel
+                </Link>
+              ) : (
+                <Link
+                  href="/perfil"
+                  className="px-4 py-2 rounded-lg bg-cyber-light/20 border border-cyber-border
+                    text-cyber-text hover:bg-cyber-light/30 transition-colors text-sm font-semibold
+                    flex items-center gap-2"
+                >
+                  <User className="w-4 h-4" />
+                  Perfil
+                </Link>
+              )}
               <button
                 onClick={handleLogout}
                 className="px-4 py-2 rounded-lg bg-cyber-light/30 border border-cyber-border

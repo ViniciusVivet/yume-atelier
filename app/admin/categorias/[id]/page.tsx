@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Category } from '@/lib/types'
 import { useToast } from '@/contexts/ToastContext'
+import ImageUpload from '@/components/admin/ImageUpload'
 
 export default function AdminCategoryEditPage() {
   const router = useRouter()
@@ -57,14 +58,29 @@ export default function AdminCategoryEditPage() {
     setLoading(true)
 
     const supabase = createClient()
-    
-    // Generate slug if not provided
-    if (!formData.slug && formData.name) {
-      formData.slug = generateSlug(formData.name)
+    const slug = formData.slug?.trim() || (formData.name ? generateSlug(formData.name) : '')
+    if (!slug) {
+      addToast('error', 'Slug é obrigatório (ou preencha o nome para gerar automaticamente).')
+      setLoading(false)
+      return
     }
 
+    const { data: existing } = await supabase
+      .from('categories')
+      .select('id')
+      .eq('slug', slug)
+      .maybeSingle()
+
+    if (existing && (isNew || existing.id !== categoryId)) {
+      addToast('error', 'Já existe outra categoria com este slug. Escolha outro.')
+      setLoading(false)
+      return
+    }
+
+    const payload = { ...formData, slug }
+
     if (isNew) {
-      const { error } = await supabase.from('categories').insert(formData)
+      const { error } = await supabase.from('categories').insert(payload)
       if (error) {
         addToast('error', `Erro ao criar categoria: ${error.message}`)
         setLoading(false)
@@ -74,9 +90,9 @@ export default function AdminCategoryEditPage() {
     } else {
       const { error } = await supabase
         .from('categories')
-        .update(formData)
+        .update(payload)
         .eq('id', categoryId)
-      
+
       if (error) {
         addToast('error', `Erro ao atualizar categoria: ${error.message}`)
         setLoading(false)
@@ -158,14 +174,21 @@ export default function AdminCategoryEditPage() {
 
         <div>
           <label className="block text-sm font-semibold text-cyber-text mb-2">
-            URL da Imagem de Fundo
+            Imagem de Fundo
           </label>
+          <ImageUpload
+            folder="categories"
+            multiple={false}
+            existingUrls={formData.background_image_url ? [formData.background_image_url] : []}
+            onUploadComplete={(urls) => setFormData({ ...formData, background_image_url: urls[0] || '' })}
+          />
           <input
             type="url"
             value={formData.background_image_url}
             onChange={(e) => setFormData({ ...formData, background_image_url: e.target.value })}
-            className="w-full px-4 py-3 rounded-lg bg-cyber-darker border border-cyber-border
-              text-cyber-text focus:outline-none focus:border-cyber-glow transition-colors"
+            placeholder="Ou cole a URL da imagem aqui"
+            className="w-full mt-2 px-4 py-3 rounded-lg bg-cyber-darker border border-cyber-border
+              text-cyber-text focus:outline-none focus:border-cyber-glow transition-colors text-sm"
           />
         </div>
 

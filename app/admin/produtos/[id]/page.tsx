@@ -72,29 +72,55 @@ export default function AdminProductEditPage() {
     e.preventDefault()
     setLoading(true)
 
-    const supabase = createClient()
-    
-    // Generate slug if not provided
-    if (!formData.slug && formData.name) {
-      formData.slug = generateSlug(formData.name)
+    const slug = formData.slug?.trim() || (formData.name ? generateSlug(formData.name) : '')
+    if (!slug) {
+      addToast('error', 'Slug é obrigatório (ou preencha o nome para gerar automaticamente).')
+      setLoading(false)
+      return
     }
 
+    const supabase = createClient()
+    const { data: existing } = await supabase
+      .from('products')
+      .select('id')
+      .eq('slug', slug)
+      .maybeSingle()
+
+    if (existing && (isNew || existing.id !== productId)) {
+      addToast('error', 'Já existe outro produto com este slug. Escolha outro.')
+      setLoading(false)
+      return
+    }
+
+    const payload = { ...formData, slug }
+    const { data: { session } } = await supabase.auth.getSession()
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+
     if (isNew) {
-      const { error } = await supabase.from('products').insert(formData)
-      if (error) {
-        addToast('error', `Erro ao criar produto: ${error.message}`)
+      const res = await fetch('/api/products', {
+        method: 'POST',
+        headers,
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        addToast('error', json.error ? `Erro ao criar produto: ${json.error}` : 'Erro ao criar produto.')
         setLoading(false)
         return
       }
       addToast('success', 'Produto criado com sucesso!')
     } else {
-      const { error } = await supabase
-        .from('products')
-        .update(formData)
-        .eq('id', productId)
-      
-      if (error) {
-        addToast('error', `Erro ao atualizar produto: ${error.message}`)
+      const res = await fetch(`/api/products/${productId}`, {
+        method: 'PUT',
+        headers,
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        addToast('error', json.error ? `Erro ao atualizar produto: ${json.error}` : 'Erro ao atualizar produto.')
         setLoading(false)
         return
       }
