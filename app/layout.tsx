@@ -43,14 +43,14 @@ export default async function RootLayout({
       const supabase = createServerClient()
       
       // Fetch categories for navigation with timeout protection
-      const result = await withTimeout(
+      const result = (await withTimeout(
         supabase
           .from('categories')
           .select('id, name, slug, description, background_image_url, display_order, created_at, updated_at')
           .order('display_order', { ascending: true }),
         2000,
         'fetch nav categories'
-      )
+      )) as { data: Category[] | null; error?: { message?: string } | null }
       
       if (result?.data && !result.error) {
         categories = result.data as Category[]

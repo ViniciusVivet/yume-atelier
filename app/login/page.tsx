@@ -77,17 +77,21 @@ export default function LoginPage() {
         })
 
         if (signInError) {
-          let errorMessage = signInError.message
-          
+          const raw = signInError.message
+          let errorMessage = raw
+
           // Traduzir erros comuns
-          if (signInError.message.includes('Invalid login credentials')) {
+          if (raw.includes('Invalid login credentials')) {
             errorMessage = 'Email ou senha incorretos. Verifique e tente novamente.'
-          } else if (signInError.message.includes('Email not confirmed')) {
+          } else if (raw.includes('Email not confirmed')) {
             errorMessage = 'Email não confirmado. Verifique sua caixa de entrada.'
-          } else if (signInError.message.includes('fetch') || signInError.message.includes('network')) {
-            errorMessage = 'Erro de conexão. Verifique se o Supabase está configurado corretamente no .env.local e reinicie o servidor.'
+          } else if (raw.includes('fetch') || raw.includes('network') || raw.includes('Failed to fetch')) {
+            errorMessage = 'Erro de conexão. Na Vercel: confira variáveis de ambiente (NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY). No Supabase: Authentication → URL Configuration → adicione a URL do site (ex: https://yume-atelier.vercel.app).'
+          } else if (raw.includes('Database') || raw.includes('database') || raw.includes('JWT') || raw.includes('config')) {
+            errorMessage = `Erro de configuração (Supabase/Vercel): "${raw}". Verifique as variáveis na Vercel e a URL do site no Supabase (Authentication → URL Configuration).`
           }
-          
+
+          console.error('[YUME Login]', errorMessage, '(raw:', raw, ')')
           setError(errorMessage)
           setLoading(false)
           return
@@ -103,18 +107,14 @@ export default function LoginPage() {
         }
       }
     } catch (err: any) {
-      console.error('Erro completo:', err)
-      let errorMessage = 'Erro ao processar. '
-      
-      if (err.message?.includes('fetch') || err.message?.includes('network') || err.message?.includes('ERR_NAME_NOT_RESOLVED')) {
-        errorMessage += 'Erro de conexão com Supabase. Verifique:\n'
-        errorMessage += '1. O arquivo .env.local existe e tem as variáveis corretas\n'
-        errorMessage += '2. Reinicie o servidor (Ctrl+C e depois npm run dev)\n'
-        errorMessage += '3. Verifique se a URL do Supabase está correta'
+      const msg = err?.message || String(err)
+      console.error('[YUME Login] Erro completo:', err)
+      let errorMessage: string
+      if (msg.includes('fetch') || msg.includes('network') || msg.includes('ERR_NAME_NOT_RESOLVED')) {
+        errorMessage = 'Erro de conexão com Supabase. Na Vercel: confira as variáveis de ambiente. No Supabase: Authentication → URL Configuration → adicione a URL do seu site (ex: https://yume-atelier.vercel.app).'
       } else {
-        errorMessage += err.message || 'Erro desconhecido'
+        errorMessage = `Erro ao processar: ${msg}`
       }
-      
       setError(errorMessage)
       setLoading(false)
     }

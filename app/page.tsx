@@ -50,21 +50,21 @@ export default async function HomePage() {
         )
       ])
 
-      if (productsResult.status === 'fulfilled' && productsResult.value.data) {
-        products = productsResult.value.data as Product[]
+      if (productsResult.status === 'fulfilled' && (productsResult.value as { data?: Product[] | null }).data) {
+        products = (productsResult.value as { data?: Product[] | null }).data || []
         if (products.length > 0) hasRealProducts = true;
       } else if (productsResult.status === 'rejected') {
         console.error('Error fetching products:', productsResult.reason);
       }
 
-      if (settingsResult.status === 'fulfilled' && settingsResult.value.data) {
-        settings = settingsResult.value.data as SiteSettings
+      if (settingsResult.status === 'fulfilled' && (settingsResult.value as { data?: SiteSettings | null }).data) {
+        settings = (settingsResult.value as { data?: SiteSettings | null }).data || null
       } else if (settingsResult.status === 'rejected') {
         console.error('Error fetching settings:', settingsResult.reason);
       }
 
-      if (categoriesResult.status === 'fulfilled' && categoriesResult.value.data) {
-        categories = categoriesResult.value.data as Category[]
+      if (categoriesResult.status === 'fulfilled' && (categoriesResult.value as { data?: Category[] | null }).data) {
+        categories = (categoriesResult.value as { data?: Category[] | null }).data || []
       } else if (categoriesResult.status === 'rejected') {
         console.error('Error fetching categories:', categoriesResult.reason);
       }

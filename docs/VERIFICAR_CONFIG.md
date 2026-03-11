@@ -66,3 +66,42 @@ fetch('https://vhrvpbamcfmrvttqkkeo.supabase.co/rest/v1/', {
 
 Se der erro, o problema é de rede/firewall.
 
+---
+
+## Login falha na Vercel (produção) mas o Supabase está “healthy”
+
+Se o login funciona em localhost mas em **https://yume-atelier.vercel.app** aparece erro (ex.: “Erro temporário no servidor” ou “Email ou senha incorretos” mesmo com credenciais certas), faça estes passos:
+
+### 1. Variáveis de ambiente na Vercel
+
+1. Vercel → seu projeto → **Settings** → **Environment Variables**
+2. Confirme que existem e estão corretos (para **Production**):
+   - `NEXT_PUBLIC_SUPABASE_URL` = URL do seu projeto (ex: `https://xxxx.supabase.co`)
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = chave **anon/public**
+3. Se alterar algo, faça **Redeploy** (Deployments → ⋮ no último deploy → Redeploy).
+
+### 2. URL do site no Supabase (muito comum)
+
+O Supabase só aceita login de origens permitidas. Se a URL da Vercel não estiver cadastrada, o auth pode falhar com erro genérico.
+
+1. Supabase Dashboard → **Authentication** → **URL Configuration**
+2. **Site URL:** coloque a URL de produção, ex: `https://yume-atelier.vercel.app`
+3. **Redirect URLs:** adicione (uma por linha):
+   - `https://yume-atelier.vercel.app`
+   - `https://yume-atelier.vercel.app/**`
+4. Salve e tente o login de novo.
+
+### 3. Usuário existe e está confirmado
+
+1. Supabase → **Authentication** → **Users**
+2. Confirme que existe um usuário com o **mesmo email** que você usa no login (ex: `admin@teste.com`).
+3. O usuário deve estar **confirmado** (Email Confirmed). Se não estiver, edite o usuário e marque **Auto Confirm User** / “Email confirmed”.
+
+### 4. Ver o erro real no console
+
+Depois do próximo deploy, abra o site da Vercel, vá em **Login**, abra o **Console** (F12 → Console) e tente logar. Você deve ver algo como:
+
+`[YUME Login] ... (raw: ...)`
+
+O trecho **raw** é a mensagem que o Supabase devolveu. Isso ajuda a saber se é “Invalid login credentials”, erro de rede, de JWT, etc.
+

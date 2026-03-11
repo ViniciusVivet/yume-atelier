@@ -23,7 +23,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     const supabase = createServerClient()
 
     // Fetch product
-    const productResult = await withTimeout(
+    const productResult = (await withTimeout(
       supabase
         .from('products')
         .select(
@@ -36,7 +36,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         .single(),
       2500,
       'fetch product'
-    )
+    )) as { data: Product | null }
 
     if (!productResult.data) {
       notFound()
@@ -45,11 +45,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
     product = productResult.data
 
     // Fetch site settings for WhatsApp
-    const settingsResult = await withTimeout(
+    const settingsResult = (await withTimeout(
       supabase.from('site_settings').select('*').single(),
       2500,
       'fetch site settings'
-    )
+    )) as { data: { whatsapp_number?: string; whatsapp_message_template?: string } | null }
     
     settings = settingsResult.data
   } catch (err) {
