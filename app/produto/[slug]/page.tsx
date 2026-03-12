@@ -7,7 +7,6 @@ import { Product } from '@/lib/types'
 import { ArrowLeft } from 'lucide-react'
 import { withTimeout } from '@/lib/utils/withTimeout'
 import { getDemoProductBySlug } from '@/lib/demo/demoData'
-import DemoBanner from '@/components/landing/DemoBanner'
 
 interface ProductPageProps {
   params: { slug: string }
@@ -101,11 +100,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <div className="min-h-screen relative">
-      {String((product as any)?.id || '').startsWith('demo-') && (
-        <div className="relative z-20">
-          <DemoBanner />
-        </div>
-      )}
       {/* Background */}
       <div className="absolute inset-0 z-0">
         {product.image_urls[0] && (

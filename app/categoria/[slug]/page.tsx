@@ -7,7 +7,6 @@ import { Product, Category, SiteSettings } from '@/lib/types'
 import { ArrowLeft } from 'lucide-react'
 import { withTimeout } from '@/lib/utils/withTimeout'
 import { demoCategories, getDemoCategory, getDemoProductsByCategorySlug } from '@/lib/demo/demoData'
-import DemoBanner from '@/components/landing/DemoBanner'
 
 interface CategoryPageProps {
   params: { slug: string }
@@ -110,7 +109,6 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   // Use StoreLayout instead of InventoryCarousel for better UX
   return (
     <div className="min-h-screen">
-      {String((category as any)?.id || '').startsWith('demo-') && <DemoBanner />}
       <div className="container mx-auto px-8 py-8">
         <Link
           href="/"

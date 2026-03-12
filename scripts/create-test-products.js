@@ -1,119 +1,263 @@
 /**
- * Script para criar produtos de teste
+ * Script de seed do catálogo real YUME
+ * Apaga tudo do Supabase e recria com os dados reais do spyume.com
+ *
  * Execute: node scripts/create-test-products.js
- * 
- * Certifique-se de ter as variáveis de ambiente configuradas no .env.local
  */
 
 require('dotenv').config({ path: '.env.local' })
 const { createClient } = require('@supabase/supabase-js')
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error('❌ Variáveis de ambiente não configuradas!')
-  console.error('Configure NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY no .env.local')
+if (!supabaseUrl || (!serviceRoleKey && !anonKey)) {
+  console.error('❌ Configure NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no .env.local')
   process.exit(1)
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey)
+// Usa service role para bypass de RLS nos deletes; cai para anon se não tiver
+const supabase = createClient(supabaseUrl, serviceRoleKey || anonKey)
 
-async function createTestProducts() {
-  console.log('🚀 Criando produtos de teste...\n')
+// ─────────────────────────────────────────────
+// CATEGORIAS REAIS
+// ─────────────────────────────────────────────
+const CATEGORIES = [
+  {
+    name: 'Camisas',
+    slug: 'camisas',
+    description: 'Camisas box-cut feitas à mão. Cada uma com identidade própria.',
+    background_image_url: '/images/products/camisa-gengar.jpg',
+    display_order: 1,
+  },
+  {
+    name: 'Jorts',
+    slug: 'jorts',
+    description: 'Bermudas jeans upcycled. Cada par construído a partir de peças descartadas.',
+    background_image_url: '/images/products/jorts-flame.jpg',
+    display_order: 2,
+  },
+  {
+    name: 'Calças',
+    slug: 'calcas',
+    description: 'Calças baggy com recortes e patchwork artesanal.',
+    background_image_url: '/images/products/calca-flame.jpg',
+    display_order: 3,
+  },
+  {
+    name: 'YUME x B.R.A',
+    slug: 'yume-x-bra',
+    description: 'Colaboração entre YUME e B.R.A. Peças únicas de edição limitada.',
+    background_image_url: '/images/products/camisa-gengar.jpg',
+    display_order: 4,
+  },
+]
 
-  // 1. Criar categorias
-  console.log('📁 Criando categorias...')
-  const categories = [
-    { name: 'Blusas', slug: 'blusas', description: 'Blusas e camisetas', display_order: 1 },
-    { name: 'Saias', slug: 'saias', description: 'Saias femininas', display_order: 2 },
-    { name: 'Acessórios', slug: 'acessorios', description: 'Acessórios e complementos', display_order: 3 },
+// ─────────────────────────────────────────────
+// PRODUTOS REAIS (catálogo spyume.com)
+// ─────────────────────────────────────────────
+function buildProducts(categoryIds) {
+  return [
+    {
+      name: 'Camisa Box YUME x B.R.A — Ghost Type',
+      slug: 'camisa-box-yume-x-bra-ghost-type',
+      description: 'Camisa box-cut em colaboração com a B.R.A. Inspirada no Ghost Type — Gengar. Tamanho PM.',
+      artistic_description:
+        'Uma collab que nasceu da mesma energia: dois projetos autorais que recusam o convencional. O Ghost Type não assombra — ele aparece.',
+      technical_info: 'Tamanho: PM · Material: denim upcycled · Confecção: 100% à mão · Peça única',
+      category_id: categoryIds['yume-x-bra'],
+      status: 'available',
+      price: 450,
+      image_urls: ['/images/products/camisa-gengar.jpg'],
+      display_order: 1,
+    },
+    {
+      name: 'Camisa Box YUME — Blue Flames',
+      slug: 'camisa-box-yume-blue-flames',
+      description: 'Camisa box-cut com estampa Blue Flames. Tamanho P.',
+      artistic_description:
+        'O fogo não queima — ele transforma. Peça feita pra quem prefere aparecer sem pedir permissão.',
+      technical_info: 'Tamanho: P · Material: denim upcycled · Confecção: 100% à mão · Peça única',
+      category_id: categoryIds['camisas'],
+      status: 'available',
+      price: 250,
+      image_urls: ['/images/products/camisa-flame.jpg'],
+      display_order: 2,
+    },
+    {
+      name: 'Jorts Azul Flames',
+      slug: 'jorts-azul-flames',
+      description: 'Bermuda jeans azul com estampa flames. Tamanho 46.',
+      artistic_description: '3 calças descartadas viraram isso. Zero desperdício, zero igual.',
+      technical_info: 'Tamanho: 46 · Material: denim upcycled · Confecção: 100% à mão · Peça única',
+      category_id: categoryIds['jorts'],
+      status: 'available',
+      price: 350,
+      image_urls: ['/images/products/jorts-flame.jpg'],
+      display_order: 3,
+    },
+    {
+      name: 'Calça Baggy YUME Retalhos',
+      slug: 'calca-baggy-yume-retalhos',
+      description: 'Calça baggy com patchwork de retalhos de jeans. Tamanho 48.',
+      artistic_description:
+        'Cada retalho tem uma história. Juntos, contam uma nova. Feita à mão, peça a peça.',
+      technical_info: 'Tamanho: 48 · Material: retalhos de denim upcycled · Confecção: 100% à mão · Peça única',
+      category_id: categoryIds['calcas'],
+      status: 'available',
+      price: 250,
+      image_urls: ['/images/products/calca-flame.jpg'],
+      display_order: 4,
+    },
+    {
+      name: 'Jorts Cinza Smile',
+      slug: 'jorts-cinza-smile',
+      description: 'Bermuda jeans cinza com bordado smile. Tamanho 44.',
+      artistic_description:
+        'Simples na leitura rápida, complexo em cada costura. O smile é o detalhe que muda tudo.',
+      technical_info: 'Tamanho: 44 · Material: denim upcycled · Confecção: 100% à mão · Peça única',
+      category_id: categoryIds['jorts'],
+      status: 'available',
+      price: 300,
+      image_urls: ['/images/products/jorts-smile.jpg'],
+      display_order: 5,
+    },
+    {
+      name: 'Jorts Preto Spider',
+      slug: 'jorts-preto-spider',
+      description: 'Bermuda jeans preta com estampa spider. Tamanho 44.',
+      artistic_description:
+        'Preto absoluto. A teia não aprisiona — ela conecta quem faz parte do mesmo universo.',
+      technical_info: 'Tamanho: 44 · Material: denim upcycled · Confecção: 100% à mão · Peça única',
+      category_id: categoryIds['jorts'],
+      status: 'available',
+      price: 250,
+      image_urls: ['/images/products/jorts-spider.jpg'],
+      display_order: 6,
+    },
+    {
+      name: 'Jorts Azul Tiras',
+      slug: 'jorts-azul-tiras',
+      description: 'Bermuda jeans azul com recortes em tiras. Tamanho 40.',
+      artistic_description:
+        'Desconstruído no corte, preciso na execução. Cada tira é intencional — nada aqui acontece por acidente.',
+      technical_info: 'Tamanho: 40 · Material: denim upcycled · Confecção: 100% à mão · Peça única',
+      category_id: categoryIds['jorts'],
+      status: 'available',
+      price: 200,
+      image_urls: ['/images/products/jorts-tiras.jpg'],
+      display_order: 7,
+    },
   ]
+}
 
-  const categoryIds = {}
-  for (const cat of categories) {
-    const { data, error } = await supabase
-      .from('categories')
-      .upsert(cat, { onConflict: 'slug' })
-      .select()
-      .single()
+// ─────────────────────────────────────────────
+// MAIN
+// ─────────────────────────────────────────────
+async function seed() {
+  console.log('🔥 Iniciando seed do catálogo YUME...\n')
 
-    if (error && !error.message.includes('duplicate')) {
-      console.error(`❌ Erro ao criar categoria ${cat.name}:`, error.message)
-    } else {
-      categoryIds[cat.slug] = data?.id
-      console.log(`✅ Categoria "${cat.name}" criada/encontrada`)
-    }
+  // 1. Deletar produtos existentes
+  console.log('🗑️  Deletando produtos antigos...')
+  const { error: delProductsErr } = await supabase
+    .from('products')
+    .delete()
+    .neq('id', '00000000-0000-0000-0000-000000000000') // deleta tudo
+
+  if (delProductsErr) {
+    console.error('❌ Erro ao deletar produtos:', delProductsErr.message)
+    console.log('⚠️  Continuando mesmo assim...')
+  } else {
+    console.log('✅ Produtos antigos deletados')
   }
 
-  // 2. Criar produtos
-  console.log('\n👕 Criando produtos...')
+  // 2. Deletar categorias existentes
+  console.log('🗑️  Deletando categorias antigas...')
+  const { error: delCatsErr } = await supabase
+    .from('categories')
+    .delete()
+    .neq('id', '00000000-0000-0000-0000-000000000000') // deleta tudo
 
-  const products = [
-    {
-      name: 'Blusa Jeans Destruída',
-      slug: 'blusa-jeans-destruida',
-      description: 'Blusa jeans com cortes estratégicos e acabamento artesanal. Peça única com design disruptivo.',
-      artistic_description: 'Uma releitura da clássica blusa jeans, transformada em peça de arte através de cortes precisos e acabamento manual. Cada unidade é única, carregando a essência da moda disruptiva.',
-      technical_info: 'Material: 100% Algodão Denim | Lavagem: Artesanal | Cuidados: Lavar à mão, não usar alvejante',
-      category_id: categoryIds['blusas'],
-      status: 'available',
-      price: 299.90,
-      image_urls: [
-        'https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=800&q=80',
-        'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=800&q=80'
-      ],
-      display_order: 1
-    },
-    {
-      name: 'Saia Asimétrica Preta',
-      slug: 'saia-assimetrica-preta',
-      description: 'Saia feminina com corte assimétrico e tecido fluido. Design vanguardista para looks disruptivos.',
-      artistic_description: 'Uma peça que desafia a simetria tradicional. O corte assimétrico cria movimento e fluidez, enquanto o tecido preto oferece versatilidade para composições ousadas.',
-      technical_info: 'Material: Poliéster Premium | Forro: 100% Algodão | Comprimento: Asimétrico (mín: 50cm, máx: 80cm)',
-      category_id: categoryIds['saias'],
-      status: 'available',
-      price: 349.90,
-      image_urls: [
-        'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800&q=80',
-        'https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=800&q=80'
-      ],
-      display_order: 2
-    },
-    {
-      name: 'Balaclava Cyberpunk',
-      slug: 'balaclava-cyberpunk',
-      description: 'Balaclava com design futurista e estampa exclusiva. Acessório essencial para looks disruptivos.',
-      artistic_description: 'Mais que um acessório, uma declaração. A balaclava cyberpunk combina funcionalidade com estética vanguardista, perfeita para quem busca destacar-se.',
-      technical_info: 'Material: 95% Algodão, 5% Elastano | Estampa: Serigrafia | Tamanho: Único (ajustável)',
-      category_id: categoryIds['acessorios'],
-      status: 'available',
-      price: 89.90,
-      image_urls: [
-        'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&q=80',
-        'https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=800&q=80'
-      ],
-      display_order: 3
+  if (delCatsErr) {
+    console.error('❌ Erro ao deletar categorias:', delCatsErr.message)
+    console.log('⚠️  Continuando mesmo assim...')
+  } else {
+    console.log('✅ Categorias antigas deletadas\n')
+  }
+
+  // 3. Inserir categorias reais
+  console.log('📁 Inserindo categorias reais...')
+  const categoryIds = {}
+
+  for (const cat of CATEGORIES) {
+    const { data, error } = await supabase
+      .from('categories')
+      .insert(cat)
+      .select('id, slug')
+      .single()
+
+    if (error) {
+      console.error(`❌ Erro na categoria "${cat.name}":`, error.message)
+      process.exit(1)
     }
-  ]
+
+    categoryIds[cat.slug] = data.id
+    console.log(`   ✅ ${cat.name} (${data.id})`)
+  }
+
+  // 4. Inserir produtos reais
+  console.log('\n👕 Inserindo produtos reais...')
+  const products = buildProducts(categoryIds)
 
   for (const product of products) {
     const { data, error } = await supabase
       .from('products')
-      .upsert(product, { onConflict: 'slug' })
-      .select()
+      .insert(product)
+      .select('id, name')
       .single()
 
     if (error) {
-      console.error(`❌ Erro ao criar produto "${product.name}":`, error.message)
-    } else {
-      console.log(`✅ Produto "${product.name}" criado! (R$ ${product.price})`)
+      console.error(`❌ Erro no produto "${product.name}":`, error.message)
+      process.exit(1)
     }
+
+    console.log(`   ✅ ${product.name} — R$ ${product.price}`)
   }
 
-  console.log('\n✨ Produtos de teste criados com sucesso!')
-  console.log('🌐 Acesse http://localhost:3002 para ver os produtos na loja')
+  // 5. Atualizar site_settings com o WhatsApp correto
+  console.log('\n⚙️  Atualizando configurações do site...')
+  const { data: existingSettings } = await supabase
+    .from('site_settings')
+    .select('id')
+    .single()
+
+  const settingsPayload = {
+    site_title: 'YUME Atelier',
+    site_description: 'Moda upcycled feita à mão em São Paulo. Zero desperdício, zero igual.',
+    whatsapp_number: '5511986765219',
+    whatsapp_message_template: 'Salve! Tenho interesse na peça {PRODUCT_NAME} do YUME. Como faço pra comprar?',
+  }
+
+  if (existingSettings?.id) {
+    const { error } = await supabase
+      .from('site_settings')
+      .update(settingsPayload)
+      .eq('id', existingSettings.id)
+    if (error) console.error('⚠️  Erro ao atualizar settings:', error.message)
+    else console.log('   ✅ site_settings atualizado')
+  } else {
+    const { error } = await supabase.from('site_settings').insert(settingsPayload)
+    if (error) console.error('⚠️  Erro ao criar settings:', error.message)
+    else console.log('   ✅ site_settings criado')
+  }
+
+  console.log('\n🎉 Catálogo YUME real carregado com sucesso!')
+  console.log(`   ${products.length} produtos · ${CATEGORIES.length} categorias`)
+  console.log('\n🌐 Acesse http://localhost:3002 para ver o resultado')
 }
 
-createTestProducts().catch(console.error)
-
+seed().catch((err) => {
+  console.error('💥 Erro fatal:', err)
+  process.exit(1)
+})

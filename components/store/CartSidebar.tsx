@@ -2,8 +2,11 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
-import { X, ShoppingBag, Trash2 } from 'lucide-react'
+import { X, ShoppingBag, Trash2, MessageCircle } from 'lucide-react'
 import { Product } from '@/lib/types'
+
+// Fallback: usado quando o número não está configurado no Supabase
+const YUME_WHATSAPP = '5511986765219'
 
 interface CartItem extends Product {
   quantity: number
@@ -28,7 +31,8 @@ export default function CartSidebar({
   whatsappNumber,
   whatsappTemplate,
 }: CartSidebarProps) {
-  const total = cart.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0)
+  const total = cart.reduce((sum, item) => sum + (item.price || 0), 0)
+  const phone = (whatsappNumber || YUME_WHATSAPP).replace(/\D/g, '')
 
   return (
     <AnimatePresence>
@@ -87,43 +91,33 @@ export default function CartSidebar({
                   >
                     <div className="flex gap-4">
                       {item.image_urls?.[0] && (
-                        <Image
-                          src={item.image_urls[0]}
-                          alt={item.name}
-                          width={80}
-                          height={80}
-                          className="w-20 h-20 object-cover rounded border border-cyber-border"
-                        />
+                        <div className="relative w-20 h-20 flex-shrink-0 rounded overflow-hidden border border-cyber-border">
+                          <Image
+                            src={item.image_urls[0]}
+                            alt={item.name}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
                       )}
-                      <div className="flex-1">
-                        <h3 className="font-display font-semibold text-cyber-text mb-1">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-display font-semibold text-cyber-text mb-1 truncate">
                           {item.name}
                         </h3>
-                        <p className="text-cyber-glow font-bold mb-2">
-                          R$ {(item.price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        <p className="text-cyber-glow font-bold">
+                          {item.price
+                            ? `R$ ${item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                            : 'Consultar'}
                         </p>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => onUpdateQuantity(item.id, Math.max(1, item.quantity - 1))}
-                            className="w-8 h-8 rounded border border-cyber-border hover:bg-cyber-light transition-colors"
-                          >
-                            -
-                          </button>
-                          <span className="text-cyber-text w-8 text-center">{item.quantity}</span>
-                          <button
-                            onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                            className="w-8 h-8 rounded border border-cyber-border hover:bg-cyber-light transition-colors"
-                          >
-                            +
-                          </button>
-                          <button
-                            onClick={() => onRemoveItem(item.id)}
-                            className="ml-auto p-2 text-red-400 hover:bg-red-400/10 rounded transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                        <p className="text-cyber-textDim text-xs mt-1">Peça única</p>
                       </div>
+                      <button
+                        onClick={() => onRemoveItem(item.id)}
+                        className="self-start p-1.5 text-cyber-textDim hover:text-red-400 hover:bg-red-400/10 rounded transition-colors"
+                        aria-label="Remover do carrinho"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 ))
@@ -133,32 +127,34 @@ export default function CartSidebar({
             {/* Footer */}
             {cart.length > 0 && (
               <div className="border-t border-cyber-border p-6 space-y-4">
-                <div className="flex items-center justify-between text-lg">
-                  <span className="text-cyber-textDim">Total:</span>
-                  <span className="font-display font-bold text-cyber-glow text-xl">
-                    R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-                {whatsappNumber && cart.length > 0 && (
-                  <a
-                    href={`https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${encodeURIComponent(
-                      `Olá! Tenho interesse nas seguintes peças do YUME Atelier:\n\n${cart.map((item) => 
-                        `• ${item.name} (${item.quantity}x) - R$ ${((item.price || 0) * item.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                      ).join('\n')}\n\nTotal: R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full px-6 py-3 rounded-lg
-                      bg-cyber-glow/20 border border-cyber-glow/50
-                      backdrop-blur-md
-                      text-cyber-glow font-display font-semibold
-                      hover:bg-cyber-glow/30 hover:shadow-glow transition-all
-                      flex items-center justify-center gap-2"
-                  >
-                    <ShoppingBag className="w-5 h-5" />
-                    Finalizar Pedido via WhatsApp
-                  </a>
+                {total > 0 && (
+                  <div className="flex items-center justify-between text-lg">
+                    <span className="text-cyber-textDim">Total estimado:</span>
+                    <span className="font-display font-bold text-cyber-glow text-xl">
+                      R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
                 )}
+                <a
+                  href={`https://wa.me/${phone}?text=${encodeURIComponent(
+                    `Salve! Tenho interesse nas seguintes peças do YUME:\n\n${cart.map((item) =>
+                      `• ${item.name}${item.price ? ` — R$ ${item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}`
+                    ).join('\n')}\n\nQuero saber sobre disponibilidade e como comprar!`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full px-6 py-4 rounded-lg
+                    bg-green-500/20 border border-green-500/50
+                    text-green-400 font-display font-bold text-lg
+                    hover:bg-green-500/30 transition-all
+                    flex items-center justify-center gap-3"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                  Comprar via WhatsApp
+                </a>
+                <p className="text-cyber-textDim text-xs text-center">
+                  Você será redirecionado para o WhatsApp do Camaleão
+                </p>
               </div>
             )}
           </motion.div>

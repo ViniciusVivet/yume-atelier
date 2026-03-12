@@ -3,6 +3,7 @@
 import { ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
 import Header from '@/components/layout/Header'
+import Footer from '@/components/layout/Footer'
 import { CategoriesProvider } from '@/contexts/CategoriesContext'
 import PageTransition from '@/components/ui/PageTransition'
 import CursorGlow from '@/components/ui/CursorGlow'
@@ -31,6 +32,7 @@ export default function AppShell({
             {children}
           </PageTransition>
         </main>
+        {!isAdminArea && !isAuthArea && <Footer />}
         <ToastContainer />
       </div>
     </CategoriesProvider>

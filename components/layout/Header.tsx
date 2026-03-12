@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { User, LogOut, ShoppingBag, Grid3X3, Search, Instagram, MessageCircle, LayoutDashboard } from 'lucide-react'
+import { LogOut, ShoppingBag, Grid3X3, Search, Instagram, MessageCircle, LayoutDashboard } from 'lucide-react'
 import { useCart } from '@/contexts/CartContext'
 import { isAdminClient } from '@/lib/utils/admin'
 import { useSiteSettings } from '@/contexts/SiteSettingsContext'
@@ -14,8 +14,10 @@ import CategoriesDrawer from '@/components/navigation/CategoriesDrawer'
 import SearchOverlay from '@/components/search/SearchOverlay'
 import Portal from '@/components/ui/Portal'
 
+const YUME_WHATSAPP = '5511986765219'
+const INSTAGRAM_URL = 'https://instagram.com/sp.yume'
+
 function HeaderContent() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false)
@@ -29,43 +31,25 @@ function HeaderContent() {
   const checkSession = useCallback(async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      setIsLoggedIn(!!session)
       setIsAdmin(session ? await isAdminClient() : false)
-    } catch (err) {
-      setIsLoggedIn(false)
+    } catch {
       setIsAdmin(false)
     }
   }, [supabase])
 
   useEffect(() => {
-    // Verificar se Supabase está configurado antes de tentar usar
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      // Supabase não configurado - não tenta fazer nada
-      return
-    }
-
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return
     checkSession()
-    
-    // Listen for auth changes
     try {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-        checkSession()
-      })
-
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(() => checkSession())
       return () => subscription.unsubscribe()
     } catch (err) {
-      // Erro ao configurar listener - ignora
       console.error('Error setting up auth listener:', err)
     }
   }, [checkSession, supabase])
 
   const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut()
-    } catch (err) {
-      console.error('Error signing out:', err)
-    }
-    setIsLoggedIn(false)
+    try { await supabase.auth.signOut() } catch {}
     setIsAdmin(false)
     router.push('/')
     router.refresh()
@@ -73,18 +57,19 @@ function HeaderContent() {
 
   const isAdminPage = pathname?.startsWith('/admin')
   const isLoginPage = pathname === '/admin/login' || pathname === '/login'
-  const instagramUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL
+  const whatsappHref = `https://wa.me/${(settings?.whatsapp_number || YUME_WHATSAPP).replace(/\D/g, '')}?text=${encodeURIComponent('Salve! Vim pelo site do YUME e quero saber sobre as peças.')}`
 
   return (
     <header className="sticky top-0 z-50 border-b border-cyber-border bg-cyber-dark/95 backdrop-blur-xl">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        {/* Logo / Home */}
-        <Link href="/" className="flex items-center gap-2 group" aria-label="Ir para a home do YUME">
+
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-2 group" aria-label="YUME — ir para a home">
           <span
             className="inline-flex items-center justify-center w-7 h-7 rounded-md
               bg-cyber-glow/10 border border-cyber-glow/30
               text-cyber-glow group-hover:text-cyber-glowAlt group-hover:border-cyber-glowAlt/40
-              transition-colors font-display font-black"
+              transition-colors font-display font-black text-base"
             title="夢 (Yume) = Sonho"
           >
             夢
@@ -94,146 +79,130 @@ function HeaderContent() {
           </span>
         </Link>
 
-        {/* Right side actions */}
-        <div className="flex items-center gap-4">
-          {/* Explore categories */}
-          {!isAdminPage && !isLoginPage && (
+        {/* ── Loja pública ── */}
+        {!isAdminPage && !isLoginPage && (
+          <div className="flex items-center gap-1 sm:gap-2">
+
+            {/* Categorias — ícone no mobile, texto no desktop */}
             <button
               onClick={() => setIsCategoriesOpen(true)}
-              className="px-4 py-2 rounded-lg bg-cyber-light/20 border border-cyber-border
-                text-cyber-text hover:bg-cyber-light/30 transition-colors text-sm font-semibold
-                flex items-center gap-2"
-              aria-label="Abrir categorias"
+              className="p-2 sm:px-3 sm:py-2 rounded-lg bg-cyber-light/20 border border-cyber-border
+                text-cyber-text hover:bg-cyber-light/30 transition-colors
+                flex items-center gap-2 text-sm font-semibold"
+              aria-label="Categorias"
             >
-              <Grid3X3 className="w-4 h-4" />
-              Categorias
+              <Grid3X3 className="w-4 h-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Categorias</span>
             </button>
-          )}
 
-          {/* Search */}
-          {!isAdminPage && !isLoginPage && (
+            {/* Buscar — ícone no mobile, texto no desktop */}
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="px-3 py-2 rounded-lg bg-cyber-light/20 border border-cyber-border
-                text-cyber-text hover:bg-cyber-light/30 transition-colors text-sm font-semibold
-                flex items-center gap-2"
-              aria-label="Buscar peças"
+              className="p-2 sm:px-3 sm:py-2 rounded-lg bg-cyber-light/20 border border-cyber-border
+                text-cyber-text hover:bg-cyber-light/30 transition-colors
+                flex items-center gap-2 text-sm font-semibold"
+              aria-label="Buscar"
             >
-              <Search className="w-4 h-4" />
-              Buscar
+              <Search className="w-4 h-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Buscar</span>
             </button>
-          )}
 
-          {/* Social links */}
-          {!isAdminPage && !isLoginPage && (
-            <div className="hidden md:flex items-center gap-2">
-              {instagramUrl && (
-                <a
-                  href={instagramUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-lg bg-cyber-light/20 border border-cyber-border text-cyber-text hover:bg-cyber-light/30 transition-colors"
-                  aria-label="Instagram"
-                  title="Instagram"
-                >
-                  <Instagram className="w-4 h-4" />
-                </a>
-              )}
-              {settings?.whatsapp_number && (
-                <a
-                  href={`https://wa.me/${settings.whatsapp_number.replace(/\D/g, '')}?text=${encodeURIComponent(
-                    'Salve! Vim pelo site do YUME e quero saber sobre as peças.'
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-lg bg-cyber-glow/15 border border-cyber-glow/30 text-cyber-glow hover:bg-cyber-glow/25 transition-colors"
-                  aria-label="WhatsApp"
-                  title="WhatsApp"
-                >
-                  <MessageCircle className="w-4 h-4" />
-                </a>
-              )}
-            </div>
-          )}
+            {/* Instagram — visível em todos os tamanhos */}
+            <a
+              href={INSTAGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 rounded-lg bg-cyber-light/20 border border-cyber-border
+                text-cyber-text hover:bg-cyber-light/30 transition-colors"
+              aria-label="Instagram @sp.yume"
+              title="Instagram"
+            >
+              <Instagram className="w-4 h-4" />
+            </a>
 
-          {/* Cart Button (only on store pages) */}
-          {!isAdminPage && !isLoginPage && (
+            {/* WhatsApp — visível em todos os tamanhos */}
+            <a
+              href={whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 rounded-lg bg-cyber-glow/15 border border-cyber-glow/30
+                text-cyber-glow hover:bg-cyber-glow/25 transition-colors"
+              aria-label="WhatsApp"
+              title="WhatsApp"
+            >
+              <MessageCircle className="w-4 h-4" />
+            </a>
+
+            {/* Carrinho */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className="relative px-4 py-2 rounded-lg bg-cyber-glow/20 border border-cyber-glow/50
-                text-cyber-glow hover:bg-cyber-glow/30 transition-colors text-sm font-semibold
-                flex items-center gap-2"
+              className="relative p-2 sm:px-3 sm:py-2 rounded-lg
+                bg-cyber-glow/20 border border-cyber-glow/50
+                text-cyber-glow hover:bg-cyber-glow/30 transition-colors
+                flex items-center gap-2 text-sm font-semibold"
+              aria-label="Carrinho"
             >
-              <ShoppingBag className="w-4 h-4" />
-              Carrinho
+              <ShoppingBag className="w-4 h-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Carrinho</span>
               {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full
-                  bg-cyber-glowAlt text-cyber-dark text-xs font-bold
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full
+                  bg-cyber-glowAlt text-cyber-dark text-[10px] font-bold
                   flex items-center justify-center">
                   {cartCount}
                 </span>
               )}
             </button>
-          )}
 
-          {isAdminPage && !isLoginPage && (
-            <Link
-              href="/"
-              className="px-4 py-2 rounded-lg bg-cyber-light/30 border border-cyber-border
-                text-cyber-text hover:bg-cyber-light/50 transition-colors text-sm"
-            >
-              Ver Loja
-            </Link>
-          )}
-
-          {isLoggedIn ? (
-            <>
-              {isAdmin ? (
+            {/* Admin logado: Painel + Sair */}
+            {isAdmin && (
+              <>
                 <Link
                   href="/admin"
-                  className="px-4 py-2 rounded-lg bg-cyber-glow/20 border border-cyber-glow/50
-                    text-cyber-glow hover:bg-cyber-glow/30 transition-colors text-sm font-semibold
-                    flex items-center gap-2"
+                  className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg
+                    bg-cyber-glow/20 border border-cyber-glow/50
+                    text-cyber-glow hover:bg-cyber-glow/30 transition-colors text-sm font-semibold"
                 >
                   <LayoutDashboard className="w-4 h-4" />
                   Painel
                 </Link>
-              ) : (
-                <Link
-                  href="/perfil"
-                  className="px-4 py-2 rounded-lg bg-cyber-light/20 border border-cyber-border
-                    text-cyber-text hover:bg-cyber-light/30 transition-colors text-sm font-semibold
-                    flex items-center gap-2"
+                <button
+                  onClick={handleLogout}
+                  className="p-2 rounded-lg bg-cyber-light/30 border border-cyber-border
+                    text-cyber-textDim hover:text-cyber-text hover:bg-cyber-light/50 transition-colors"
+                  aria-label="Sair"
+                  title="Sair"
                 >
-                  <User className="w-4 h-4" />
-                  Perfil
-                </Link>
-              )}
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 rounded-lg bg-cyber-light/30 border border-cyber-border
-                  text-cyber-text hover:bg-cyber-light/50 transition-colors text-sm
-                  flex items-center gap-2"
-              >
-                <LogOut className="w-4 h-4" />
-                Sair
-              </button>
-            </>
-          ) : !isLoginPage ? (
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ── Painel admin ── */}
+        {isAdminPage && !isLoginPage && (
+          <div className="flex items-center gap-2">
             <Link
-              href="/login"
-              className="px-4 py-2 rounded-lg bg-cyber-glow/20 border border-cyber-glow/50
-                text-cyber-glow hover:bg-cyber-glow/30 transition-colors text-sm font-semibold
-                flex items-center gap-2"
+              href="/"
+              className="px-3 py-2 rounded-lg bg-cyber-light/30 border border-cyber-border
+                text-cyber-text hover:bg-cyber-light/50 transition-colors text-sm"
             >
-              <User className="w-4 h-4" />
-              Login
+              Ver Loja
             </Link>
-          ) : null}
-        </div>
+            <button
+              onClick={handleLogout}
+              className="p-2 rounded-lg bg-cyber-light/30 border border-cyber-border
+                text-cyber-textDim hover:text-cyber-text hover:bg-cyber-light/50 transition-colors"
+              aria-label="Sair"
+              title="Sair"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Global Cart Sidebar - accessible from header */}
+      {/* Overlays */}
       {!isAdminPage && !isLoginPage && (
         <Portal>
           <CartSidebar
@@ -254,15 +223,12 @@ function HeaderContent() {
 }
 
 export default function Header() {
-  // Wrap in ErrorBoundary to catch context errors
   return (
     <ErrorBoundary
       fallback={
         <header className="sticky top-0 z-50 border-b border-cyber-border bg-cyber-dark/95 backdrop-blur-xl">
-          <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
-              <span className="font-display font-bold text-cyber-text">YUME Atelier</span>
-            </Link>
+          <div className="container mx-auto px-4 py-3">
+            <Link href="/" className="font-display font-bold text-cyber-text">YUME</Link>
           </div>
         </header>
       }
@@ -271,4 +237,3 @@ export default function Header() {
     </ErrorBoundary>
   )
 }
-

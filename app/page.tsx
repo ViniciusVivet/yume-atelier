@@ -5,7 +5,6 @@ import HeroLanding from '@/components/landing/HeroLanding'
 import { Product, Category, SiteSettings } from '@/lib/types'
 import { withTimeout } from '@/lib/utils/withTimeout'
 import { demoProducts, demoCategories } from '@/lib/demo/demoData'
-import DemoBanner from '@/components/landing/DemoBanner'
 
 const FETCH_TIMEOUT = 3000
 

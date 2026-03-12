@@ -47,11 +47,10 @@ export default function StoreHero({ categories }: StoreHeroProps) {
         >
           <Link href="/?status=available">
             <Image
-              src="https://images.unsplash.com/photo-1515886657613-9f3515b0c23b?w=800&q=80"
+              src="/images/products/camisa-gengar.jpg"
               alt="Novo Drop"
               fill
               className="object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-500"
-              unoptimized
             />
             <div className="absolute inset-0 bg-gradient-to-t from-cyber-dark/80 via-transparent to-transparent" />
             <div className="absolute bottom-6 left-6">
@@ -74,11 +73,10 @@ export default function StoreHero({ categories }: StoreHeroProps) {
         >
           <Link href="/?status=available">
             <Image
-              src="https://images.unsplash.com/photo-1581044777550-4cfa607037dc?w=800&q=80"
+              src="/images/products/camisa-flame.jpg"
               alt="Disponível"
               fill
               className="object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-500"
-              unoptimized
             />
             <div className="absolute inset-0 bg-gradient-to-t from-cyber-dark/80 via-transparent to-transparent" />
             <div className="absolute bottom-6 left-6">
@@ -101,11 +99,10 @@ export default function StoreHero({ categories }: StoreHeroProps) {
         >
           <Link href="/?status=made_to_order">
             <Image
-              src="https://images.unsplash.com/photo-1551028150-64b9f39646e2?w=800&q=80"
+              src="/images/products/calca-flame.jpg"
               alt="Sob Encomenda"
               fill
               className="object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-500"
-              unoptimized
             />
             <div className="absolute inset-0 bg-gradient-to-t from-cyber-dark/80 via-transparent to-transparent" />
             <div className="absolute bottom-6 left-6">
