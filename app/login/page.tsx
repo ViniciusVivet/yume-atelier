@@ -75,6 +75,8 @@ export default function LoginPage() {
       setError('⚠️ Acesso negado. Você precisa ser um administrador para acessar o painel admin.')
     } else if (params.get('error') === 'admin_guard_failed') {
       setError('Nao foi possivel validar sua sessao anterior. Faça login de novo para entrar no painel admin.')
+    } else if (params.get('error') === 'admin_guard_timeout') {
+      setError('Sua sessao demorou demais para responder. Faça login novamente para continuar no painel admin.')
     }
   }, [])
 

@@ -12,6 +12,15 @@ export default function AdminAuthGuard({ children }: { children: React.ReactNode
 
   useEffect(() => {
     let cancelled = false
+    let finished = false
+
+    const timeoutId = setTimeout(() => {
+      if (!cancelled && !finished) {
+        console.error('[AdminAuthGuard] timeout ao verificar sessao/admin, redirecionando para login')
+        router.replace('/login?error=admin_guard_timeout')
+      }
+    }, 10000)
+
     async function check() {
       try {
         const supabase = createClient()
@@ -20,19 +29,23 @@ export default function AdminAuthGuard({ children }: { children: React.ReactNode
         } = await supabase.auth.getSession()
         if (cancelled) return
         if (!session) {
+          finished = true
           router.replace('/login')
           return
         }
         const admin = await isAdminClient()
         if (cancelled) return
         if (!admin) {
+          finished = true
           router.replace('/login?error=access_denied')
           return
         }
+        finished = true
         setOk(true)
       } catch (err) {
         if (cancelled) return
         console.error('[AdminAuthGuard] erro ao validar admin:', err)
+        finished = true
         // Se algo deu muito errado na validacao, volta para o login com uma mensagem amigavel.
         router.replace('/login?error=admin_guard_failed')
       }
@@ -40,6 +53,7 @@ export default function AdminAuthGuard({ children }: { children: React.ReactNode
     check()
     return () => {
       cancelled = true
+      clearTimeout(timeoutId)
     }
   }, [router])
 
