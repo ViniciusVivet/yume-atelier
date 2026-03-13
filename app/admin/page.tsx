@@ -27,23 +27,24 @@ export default async function AdminDashboard() {
     adminEmail = userResult.data.user?.email ?? ''
 
     // Contadores com timeout
-    const [productsTotalRes, categoriesTotalRes, productsStatusRes] = await Promise.all([
-      withTimeout(
-        supabase.from('products').select('*', { count: 'exact', head: true }),
-        DASHBOARD_TIMEOUT,
-        'admin dashboard total products'
-      ) as { count: number | null },
-      withTimeout(
-        supabase.from('categories').select('*', { count: 'exact', head: true }),
-        DASHBOARD_TIMEOUT,
-        'admin dashboard total categories'
-      ) as { count: number | null },
-      withTimeout(
-        supabase.from('products').select('status'),
-        DASHBOARD_TIMEOUT,
-        'admin dashboard products status'
-      ) as { data: { status: string }[] | null },
-    ])
+    const [productsTotalRes, categoriesTotalRes, productsStatusRes] =
+      (await Promise.all([
+        withTimeout(
+          supabase.from('products').select('*', { count: 'exact', head: true }),
+          DASHBOARD_TIMEOUT,
+          'admin dashboard total products'
+        ),
+        withTimeout(
+          supabase.from('categories').select('*', { count: 'exact', head: true }),
+          DASHBOARD_TIMEOUT,
+          'admin dashboard total categories'
+        ),
+        withTimeout(
+          supabase.from('products').select('status'),
+          DASHBOARD_TIMEOUT,
+          'admin dashboard products status'
+        ),
+      ])) as [{ count: number | null }, { count: number | null }, { data: { status: string }[] | null }]
 
     productTotal = productsTotalRes.count ?? 0
     categoryTotal = categoriesTotalRes.count ?? 0
