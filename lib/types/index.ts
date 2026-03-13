@@ -34,6 +34,14 @@ export interface Category {
   updated_at: string
 }
 
+export type HeroType = 'gradient' | 'image' | 'video' | 'carousel'
+
+export interface HeroMediaItem {
+  url: string
+  type: 'image' | 'video'
+  duration?: number // carousel: segundos para este item (sobrescreve o intervalo global)
+}
+
 export interface SiteSettings {
   id: string
   global_background_image_url?: string
@@ -42,6 +50,13 @@ export interface SiteSettings {
   site_description: string
   whatsapp_number: string
   whatsapp_message_template: string
+  // Hero da home
+  hero_type?: HeroType
+  hero_media_urls?: HeroMediaItem[]
+  hero_carousel_interval?: number
+  hero_video_start?: number | null
+  hero_video_end?: number | null
+  hero_video_loop?: boolean
   created_at: string
   updated_at: string
 }

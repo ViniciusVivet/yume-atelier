@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { Product, Category } from '@/lib/types'
+import { Product, Category, HeroType, HeroMediaItem } from '@/lib/types'
 import InventoryCarousel from '@/components/inventory/InventoryCarousel'
 import HeroSection from '@/components/landing/HeroSection'
 import CategoryStrip from '@/components/store/CategoryStrip'
@@ -13,12 +13,24 @@ interface StoreLayoutProps {
   whatsappNumber?: string
   whatsappTemplate?: string
   isDemoMode?: boolean
+  heroType?: HeroType
+  heroMediaUrls?: HeroMediaItem[]
+  heroCarouselInterval?: number
+  heroVideoStart?: number | null
+  heroVideoEnd?: number | null
+  heroVideoLoop?: boolean
 }
 
 export default function StoreLayout({
   products,
   categories,
   whatsappNumber,
+  heroType,
+  heroMediaUrls,
+  heroCarouselInterval,
+  heroVideoStart,
+  heroVideoEnd,
+  heroVideoLoop,
 }: StoreLayoutProps) {
   const searchParams = useSearchParams()
 
@@ -57,7 +69,16 @@ export default function StoreLayout({
     <div className="bg-cyber-dark">
 
       {/* 1 ── Hero: primeira impressão */}
-      <HeroSection totalProducts={products.length} categories={categories} />
+      <HeroSection
+        totalProducts={products.length}
+        categories={categories}
+        heroType={heroType}
+        heroMediaUrls={heroMediaUrls}
+        heroCarouselInterval={heroCarouselInterval}
+        heroVideoStart={heroVideoStart}
+        heroVideoEnd={heroVideoEnd}
+        heroVideoLoop={heroVideoLoop}
+      />
 
       {/* 2 ── Filtro de categorias: sticky abaixo do header */}
       <CategoryStrip categories={categories} />

@@ -1,9 +1,10 @@
 'use client'
 
-import { useRef } from 'react'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { useRef, useState, useEffect } from 'react'
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import { Zap, Droplets } from 'lucide-react'
-import { Category } from '@/lib/types'
+import { Category, HeroType, HeroMediaItem } from '@/lib/types'
+import Image from 'next/image'
 
 // ─── Variants de entrada staggered ───────────────────────────────────────────
 const container = {
@@ -24,54 +25,186 @@ const item = {
 interface HeroSectionProps {
   totalProducts: number
   categories: Category[]
+  heroType?: HeroType
+  heroMediaUrls?: HeroMediaItem[]
+  heroCarouselInterval?: number
+  heroVideoStart?: number | null
+  heroVideoEnd?: number | null
+  heroVideoLoop?: boolean
 }
 
-export default function HeroSection({ totalProducts }: HeroSectionProps) {
+// ─── Background renderers ─────────────────────────────────────────────────────
+
+function GradientBg({ bgY }: { bgY: ReturnType<typeof useTransform> }) {
+  return (
+    <motion.div className="absolute inset-0 z-0 scale-125 will-change-transform" style={{ y: bgY }}>
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage: 'url(/images/products/camisa-gengar.jpg)',
+          filter: 'blur(35px)',
+          opacity: 0.3,
+        }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-cyber-dark/60 via-cyber-dark/70 to-cyber-dark/95" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_70%_at_50%_50%,transparent_40%,rgba(5,5,5,0.8)_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_0%,rgba(0,255,255,0.1),transparent)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_85%_90%,rgba(255,0,255,0.08),transparent)]" />
+    </motion.div>
+  )
+}
+
+function ImageBg({ url, bgY }: { url: string; bgY: ReturnType<typeof useTransform> }) {
+  return (
+    <motion.div className="absolute inset-0 z-0 scale-110 will-change-transform" style={{ y: bgY }}>
+      <Image src={url} alt="" fill className="object-cover" unoptimized priority />
+      <div className="absolute inset-0 bg-cyber-dark/55" />
+      <div className="absolute inset-0 bg-gradient-to-b from-cyber-dark/30 via-transparent to-cyber-dark/80" />
+    </motion.div>
+  )
+}
+
+function VideoBg({
+  url,
+  loop,
+  videoStart,
+  videoEnd,
+}: {
+  url: string
+  loop: boolean
+  videoStart?: number | null
+  videoEnd?: number | null
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+    if (videoStart != null) video.currentTime = videoStart
+
+    const handleTimeUpdate = () => {
+      if (!video) return
+      if (videoEnd != null && video.currentTime >= videoEnd) {
+        if (loop) {
+          video.currentTime = videoStart ?? 0
+        } else {
+          video.pause()
+        }
+      }
+    }
+
+    video.addEventListener('timeupdate', handleTimeUpdate)
+    return () => video.removeEventListener('timeupdate', handleTimeUpdate)
+  }, [url, videoStart, videoEnd, loop])
+
+  return (
+    <div className="absolute inset-0 z-0">
+      <video
+        ref={videoRef}
+        src={url}
+        autoPlay
+        muted
+        playsInline
+        loop={loop && videoEnd == null}
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+      <div className="absolute inset-0 bg-cyber-dark/55" />
+      <div className="absolute inset-0 bg-gradient-to-b from-cyber-dark/30 via-transparent to-cyber-dark/80" />
+    </div>
+  )
+}
+
+function CarouselBg({
+  items,
+  interval,
+  bgY,
+}: {
+  items: HeroMediaItem[]
+  interval: number
+  bgY: ReturnType<typeof useTransform>
+}) {
+  const [index, setIndex] = useState(0)
+
+  useEffect(() => {
+    if (items.length <= 1) return
+    const duration = (items[index]?.duration ?? interval) * 1000
+    const timer = setTimeout(() => setIndex((prev) => (prev + 1) % items.length), duration)
+    return () => clearTimeout(timer)
+  }, [index, items, interval])
+
+  const current = items[index]
+  if (!current) return <GradientBg bgY={bgY} />
+
+  return (
+    <div className="absolute inset-0 z-0">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={index}
+          className="absolute inset-0"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 1 }}
+        >
+          {current.type === 'image' ? (
+            <Image src={current.url} alt="" fill className="object-cover" unoptimized />
+          ) : (
+            <video
+              src={current.url}
+              autoPlay muted playsInline loop
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          )}
+        </motion.div>
+      </AnimatePresence>
+      <div className="absolute inset-0 bg-cyber-dark/55" />
+      <div className="absolute inset-0 bg-gradient-to-b from-cyber-dark/30 via-transparent to-cyber-dark/80" />
+    </div>
+  )
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
+export default function HeroSection({
+  totalProducts,
+  heroType = 'gradient',
+  heroMediaUrls = [],
+  heroCarouselInterval = 5,
+  heroVideoStart,
+  heroVideoEnd,
+  heroVideoLoop = true,
+}: HeroSectionProps) {
   const sectionRef = useRef<HTMLElement>(null)
 
-  // Parallax: rastreia o progresso de scroll da seção
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ['start start', 'end start'],
   })
 
-  // Background sobe 35% mais devagar que o scroll → efeito parallax
-  const bgY = useTransform(scrollYProgress, [0, 1], ['0%', '35%'])
-  // Kanji flutua na direção oposta → ilusão de profundidade
+  const bgY = useTransform(scrollYProgress, [0, 1], ['0%', '20%'])
   const kanjiY = useTransform(scrollYProgress, [0, 1], ['0%', '-18%'])
-  // Conteúdo principal sobe 20% → sai de cena suavemente
-  const contentY = useTransform(scrollYProgress, [0, 1], ['0%', '20%'])
-  // Fade out do conteúdo ao scrollar
+  const contentY = useTransform(scrollYProgress, [0, 1], ['0%', '10%'])
   const contentOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0])
+
+  const firstUrl = heroMediaUrls[0]?.url ?? ''
 
   return (
     <section
       ref={sectionRef}
       className="relative min-h-[58vh] flex flex-col items-center justify-center overflow-hidden"
     >
-      {/* ── Background com parallax ───────────────────────────────────────── */}
-      <motion.div
-        className="absolute inset-0 z-0 scale-125 will-change-transform"
-        style={{ y: bgY }}
-      >
-        {/* Imagem real da YUME como bg */}
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: 'url(/images/products/camisa-gengar.jpg)',
-            filter: 'blur(35px)',
-            opacity: 0.3,
-          }}
-        />
-        {/* Overlay escuro com gradiente multicamada */}
-        <div className="absolute inset-0 bg-gradient-to-b from-cyber-dark/60 via-cyber-dark/70 to-cyber-dark/95" />
-        {/* Vinheta nas bordas */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_70%_at_50%_50%,transparent_40%,rgba(5,5,5,0.8)_100%)]" />
-        {/* Radial cyan (topo) */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_0%,rgba(0,255,255,0.1),transparent)]" />
-        {/* Radial magenta (base direita) */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_85%_90%,rgba(255,0,255,0.08),transparent)]" />
-      </motion.div>
+      {/* ── Background baseado no tipo ────────────────────────────────────── */}
+      {heroType === 'gradient' && <GradientBg bgY={bgY} />}
+      {heroType === 'image' && firstUrl && <ImageBg url={firstUrl} bgY={bgY} />}
+      {heroType === 'image' && !firstUrl && <GradientBg bgY={bgY} />}
+      {heroType === 'video' && firstUrl && (
+        <VideoBg url={firstUrl} loop={heroVideoLoop} videoStart={heroVideoStart} videoEnd={heroVideoEnd} />
+      )}
+      {heroType === 'video' && !firstUrl && <GradientBg bgY={bgY} />}
+      {heroType === 'carousel' && heroMediaUrls.length > 0 && (
+        <CarouselBg items={heroMediaUrls} interval={heroCarouselInterval} bgY={bgY} />
+      )}
+      {heroType === 'carousel' && heroMediaUrls.length === 0 && <GradientBg bgY={bgY} />}
 
       {/* ── Scanlines ─────────────────────────────────────────────────────── */}
       <div
@@ -137,11 +270,9 @@ export default function HeroSection({ totalProducts }: HeroSectionProps) {
             </span>
           </motion.div>
 
-          {/* Título com glitch ────────────────────────────────────────────── */}
+          {/* Título com glitch */}
           <motion.div variants={item}>
             <h1 className="font-display font-black leading-none tracking-tight mb-3">
-
-              {/* YUME — glitch intermitente a cada ~5s */}
               <motion.span
                 className="block text-[13vw] sm:text-[10vw] md:text-[6rem]
                   text-transparent bg-clip-text
@@ -168,7 +299,6 @@ export default function HeroSection({ totalProducts }: HeroSectionProps) {
                 YUME
               </motion.span>
 
-              {/* ATELIER — aparece logo abaixo */}
               <motion.span
                 className="block text-xs sm:text-base md:text-lg tracking-[0.5em]
                   text-cyber-textDim font-light mt-1"
