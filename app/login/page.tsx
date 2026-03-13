@@ -73,6 +73,8 @@ export default function LoginPage() {
     const params = new URLSearchParams(window.location.search)
     if (params.get('error') === 'access_denied') {
       setError('⚠️ Acesso negado. Você precisa ser um administrador para acessar o painel admin.')
+    } else if (params.get('error') === 'admin_guard_failed') {
+      setError('Nao foi possivel validar sua sessao anterior. Faça login de novo para entrar no painel admin.')
     }
   }, [])
 
