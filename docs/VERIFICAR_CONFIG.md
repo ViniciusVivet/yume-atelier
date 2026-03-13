@@ -105,3 +105,15 @@ Depois do próximo deploy, abra o site da Vercel, vá em **Login**, abra o **Con
 
 O trecho **raw** é a mensagem que o Supabase devolveu. Isso ajuda a saber se é “Invalid login credentials”, erro de rede, de JWT, etc.
 
+---
+
+## Criar conta direto (sem confirmar email)
+
+Por padrao o Supabase pode exigir que o usuario confirme o email antes de entrar. Para a pessoa **criar a conta e ja entrar** sem clicar em link de email:
+
+1. Supabase Dashboard → **Authentication** → **Providers** → **Email**
+2. Desmarque **"Confirm email"** (ou ative **"Auto Confirm"**).
+3. Salve.
+
+Depois disso, ao clicar em "Criar Conta" no site, o usuario recebe sessao na hora e e redirecionado para a loja. O **painel admin** continua restrito a quem estiver na tabela `admin_users` (um administrador pode adicionar o email la quando quiser liberar acesso).
+
