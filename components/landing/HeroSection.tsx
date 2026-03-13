@@ -1,44 +1,81 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import Image from 'next/image'
-import { ChevronDown, Zap, Droplets } from 'lucide-react'
+import { useRef } from 'react'
+import { motion, useScroll, useTransform } from 'framer-motion'
+import { Zap, Droplets } from 'lucide-react'
 import { Category } from '@/lib/types'
+
+// ─── Variants de entrada staggered ───────────────────────────────────────────
+const container = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.13, delayChildren: 0.2 } },
+}
+
+const item = {
+  hidden: { opacity: 0, y: 32, filter: 'blur(8px)' },
+  show: {
+    opacity: 1,
+    y: 0,
+    filter: 'blur(0px)',
+    transition: { duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+}
 
 interface HeroSectionProps {
   totalProducts: number
   categories: Category[]
 }
 
-export default function HeroSection({ totalProducts, categories }: HeroSectionProps) {
-  const scrollToCollection = () => {
-    document.getElementById('colecao')?.scrollIntoView({ behavior: 'smooth' })
-  }
+export default function HeroSection({ totalProducts }: HeroSectionProps) {
+  const sectionRef = useRef<HTMLElement>(null)
+
+  // Parallax: rastreia o progresso de scroll da seção
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start start', 'end start'],
+  })
+
+  // Background sobe 35% mais devagar que o scroll → efeito parallax
+  const bgY = useTransform(scrollYProgress, [0, 1], ['0%', '35%'])
+  // Kanji flutua na direção oposta → ilusão de profundidade
+  const kanjiY = useTransform(scrollYProgress, [0, 1], ['0%', '-18%'])
+  // Conteúdo principal sobe 20% → sai de cena suavemente
+  const contentY = useTransform(scrollYProgress, [0, 1], ['0%', '20%'])
+  // Fade out do conteúdo ao scrollar
+  const contentOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0])
 
   return (
-    <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
-
-      {/* ── Background: imagem real com blur pesado ── */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="/images/products/camisa-gengar.jpg"
-          alt=""
-          fill
-          className="object-cover scale-110"
-          style={{ filter: 'blur(40px)', opacity: 0.25 }}
-          priority
-          aria-hidden
+    <section
+      ref={sectionRef}
+      className="relative min-h-[58vh] flex flex-col items-center justify-center overflow-hidden"
+    >
+      {/* ── Background com parallax ───────────────────────────────────────── */}
+      <motion.div
+        className="absolute inset-0 z-0 scale-125 will-change-transform"
+        style={{ y: bgY }}
+      >
+        {/* Imagem real da YUME como bg */}
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: 'url(/images/products/camisa-gengar.jpg)',
+            filter: 'blur(35px)',
+            opacity: 0.3,
+          }}
         />
-        <div className="absolute inset-0 bg-cyber-dark/80" />
-        {/* Gradiente radial cyan */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(0,255,255,0.08),transparent)]" />
-        {/* Gradiente radial magenta */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_80%_80%,rgba(255,0,255,0.07),transparent)]" />
-      </div>
+        {/* Overlay escuro com gradiente multicamada */}
+        <div className="absolute inset-0 bg-gradient-to-b from-cyber-dark/60 via-cyber-dark/70 to-cyber-dark/95" />
+        {/* Vinheta nas bordas */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_70%_at_50%_50%,transparent_40%,rgba(5,5,5,0.8)_100%)]" />
+        {/* Radial cyan (topo) */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_0%,rgba(0,255,255,0.1),transparent)]" />
+        {/* Radial magenta (base direita) */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_85%_90%,rgba(255,0,255,0.08),transparent)]" />
+      </motion.div>
 
-      {/* ── Scanlines ── */}
+      {/* ── Scanlines ─────────────────────────────────────────────────────── */}
       <div
-        className="absolute inset-0 z-10 pointer-events-none opacity-[0.025]"
+        className="absolute inset-0 z-10 pointer-events-none opacity-[0.022]"
         style={{
           backgroundImage:
             'repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,255,1) 2px,rgba(0,255,255,1) 3px)',
@@ -46,7 +83,7 @@ export default function HeroSection({ totalProducts, categories }: HeroSectionPr
         }}
       />
 
-      {/* ── Grain ── */}
+      {/* ── Grain ─────────────────────────────────────────────────────────── */}
       <div
         className="absolute inset-0 z-10 pointer-events-none opacity-[0.04]"
         style={{
@@ -54,125 +91,126 @@ export default function HeroSection({ totalProducts, categories }: HeroSectionPr
         }}
       />
 
-      {/* ── 夢 decorativo gigante ── */}
-      <div
+      {/* ── 夢 gigante flutuante com parallax ─────────────────────────────── */}
+      <motion.div
         className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none select-none"
+        style={{ y: kanjiY }}
         aria-hidden
       >
-        <span
-          className="text-[30vw] font-black text-cyber-glow/[0.04] leading-none"
-          style={{ fontFamily: 'serif' }}
+        <motion.span
+          className="font-black leading-none"
+          style={{
+            fontFamily: 'serif',
+            fontSize: 'clamp(100px, 28vw, 300px)',
+            color: 'transparent',
+            WebkitTextStroke: '1px rgba(0,255,255,0.07)',
+            textShadow: '0 0 80px rgba(0,255,255,0.04)',
+          }}
+          animate={{
+            opacity: [0.6, 0.9, 0.6],
+            textShadow: [
+              '0 0 80px rgba(0,255,255,0.04)',
+              '0 0 120px rgba(0,255,255,0.09)',
+              '0 0 80px rgba(0,255,255,0.04)',
+            ],
+          }}
+          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
         >
           夢
-        </span>
-      </div>
-
-      {/* ── Conteúdo principal ── */}
-      <div className="relative z-20 text-center px-6 max-w-3xl mx-auto">
-
-        {/* Tag */}
-        <motion.div
-          className="inline-flex items-center gap-2 px-3 py-1 rounded-full
-            border border-cyber-glow/30 bg-cyber-glow/5 text-cyber-glow
-            text-xs font-semibold tracking-widest uppercase mb-8"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-cyber-glow animate-pulse" />
-          São Paulo · Upcycling · Feito à mão
-        </motion.div>
-
-        {/* Título */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.1 }}
-        >
-          <h1 className="font-display font-black leading-none tracking-tight mb-2">
-            <span
-              className="block text-[18vw] sm:text-[14vw] md:text-[11rem]
-                text-transparent bg-clip-text
-                bg-gradient-to-r from-cyber-glow via-white to-cyber-glowAlt"
-            >
-              YUME
-            </span>
-            <span className="block text-xl sm:text-2xl md:text-3xl tracking-[0.4em] text-cyber-textDim font-light mt-1">
-              ATELIER
-            </span>
-          </h1>
-        </motion.div>
-
-        {/* Tagline */}
-        <motion.p
-          className="text-lg sm:text-xl text-cyber-text/80 font-light mt-6 mb-8 leading-relaxed"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-        >
-          Feito à mão.{' '}
-          <span className="text-cyber-glow">Sem máquina.</span>{' '}
-          Sem igual.
-        </motion.p>
-
-        {/* Impact badges */}
-        <motion.div
-          className="flex flex-wrap items-center justify-center gap-3 mb-10"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.45 }}
-        >
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg
-            bg-cyber-light/30 border border-cyber-border backdrop-blur-sm
-            text-cyber-textDim text-sm">
-            <Zap className="w-3.5 h-3.5 text-cyber-glow flex-shrink-0" />
-            <span>{totalProducts} peça{totalProducts !== 1 ? 's' : ''} únicas disponíveis</span>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg
-            bg-cyber-light/30 border border-cyber-border backdrop-blur-sm
-            text-cyber-textDim text-sm">
-            <Droplets className="w-3.5 h-3.5 text-cyber-glow flex-shrink-0" />
-            <span>Cada peça economiza +5.000L de água</span>
-          </div>
-        </motion.div>
-
-        {/* CTA */}
-        <motion.button
-          onClick={scrollToCollection}
-          className="group relative inline-flex items-center gap-3
-            px-8 py-4 rounded-xl
-            bg-cyber-glow/15 border border-cyber-glow/50
-            text-cyber-glow font-display font-bold text-base tracking-wide
-            hover:bg-cyber-glow/25 hover:border-cyber-glow hover:shadow-glow
-            transition-all duration-300"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.55 }}
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.97 }}
-        >
-          Ver coleção
-          <ChevronDown className="w-4 h-4 group-hover:translate-y-1 transition-transform" />
-        </motion.button>
-      </div>
-
-      {/* ── Scroll indicator ── */}
-      <motion.div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.2, duration: 0.6 }}
-      >
-        <motion.div
-          className="w-px h-10 bg-gradient-to-b from-cyber-glow/60 to-transparent"
-          animate={{ scaleY: [0, 1, 0], originY: 0 }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-        />
+        </motion.span>
       </motion.div>
 
-      {/* ── Elementos flutuantes decorativos ── */}
-      <div className="absolute top-1/4 left-6 w-24 h-24 rounded-full border border-cyber-glow/10 blur-2xl animate-float pointer-events-none" />
-      <div className="absolute bottom-1/4 right-8 w-32 h-32 rounded-full border border-cyber-glowAlt/10 blur-2xl animate-float pointer-events-none" style={{ animationDelay: '2s' }} />
+      {/* ── Conteúdo principal ────────────────────────────────────────────── */}
+      <motion.div
+        className="relative z-20 text-center px-6 max-w-3xl mx-auto"
+        style={{ y: contentY, opacity: contentOpacity }}
+      >
+        <motion.div variants={container} initial="hidden" animate="show">
+
+          {/* Tag de origem */}
+          <motion.div variants={item} className="mb-4">
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full
+              border border-cyber-glow/30 bg-cyber-glow/5 text-cyber-glow
+              text-xs font-semibold tracking-widest uppercase">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyber-glow animate-pulse" />
+              São Paulo · Upcycling · Feito à mão
+            </span>
+          </motion.div>
+
+          {/* Título com glitch ────────────────────────────────────────────── */}
+          <motion.div variants={item}>
+            <h1 className="font-display font-black leading-none tracking-tight mb-3">
+
+              {/* YUME — glitch intermitente a cada ~5s */}
+              <motion.span
+                className="block text-[13vw] sm:text-[10vw] md:text-[6rem]
+                  text-transparent bg-clip-text
+                  bg-gradient-to-r from-cyber-glow via-white to-cyber-glowAlt
+                  select-none"
+                animate={{
+                  x: [0, 0, 0, 0, -4, 5, -2, 3, 0, 0, 0, 0],
+                  filter: [
+                    'none', 'none', 'none', 'none',
+                    'drop-shadow(5px 0 #ff00ff) drop-shadow(-5px 0 #00ffff)',
+                    'drop-shadow(-4px 0 #ff00ff) drop-shadow(4px 0 #00ffff)',
+                    'drop-shadow(3px 0 #ff00ff)',
+                    'none',
+                    'none', 'none', 'none', 'none',
+                  ],
+                }}
+                transition={{
+                  duration: 6,
+                  times: [0, 0.3, 0.5, 0.62, 0.65, 0.68, 0.71, 0.75, 0.8, 0.85, 0.9, 1],
+                  repeat: Infinity,
+                  ease: 'linear',
+                }}
+              >
+                YUME
+              </motion.span>
+
+              {/* ATELIER — aparece logo abaixo */}
+              <motion.span
+                className="block text-xs sm:text-base md:text-lg tracking-[0.5em]
+                  text-cyber-textDim font-light mt-1"
+                animate={{
+                  opacity: [0.6, 0.9, 0.6],
+                  letterSpacing: ['0.5em', '0.55em', '0.5em'],
+                }}
+                transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+              >
+                ATELIER
+              </motion.span>
+            </h1>
+          </motion.div>
+
+          {/* Tagline + badges inline */}
+          <motion.div
+            variants={item}
+            className="flex flex-wrap items-center justify-center gap-2 mt-2"
+          >
+            <p className="text-sm sm:text-base text-cyber-text/70 font-light">
+              Feito à mão.{' '}
+              <span className="text-cyber-glow font-normal">Sem máquina.</span>{' '}
+              Sem igual.
+            </p>
+            <span className="text-cyber-textDim/30">·</span>
+            <span className="inline-flex items-center gap-1.5 text-cyber-textDim text-xs">
+              <Zap className="w-3 h-3 text-cyber-glow flex-shrink-0" />
+              {totalProducts} peça{totalProducts !== 1 ? 's' : ''} únicas
+            </span>
+            <span className="text-cyber-textDim/30">·</span>
+            <span className="inline-flex items-center gap-1.5 text-cyber-textDim text-xs">
+              <Droplets className="w-3 h-3 text-cyber-glow flex-shrink-0" />
+              +5.000L economizados por peça
+            </span>
+          </motion.div>
+
+        </motion.div>
+      </motion.div>
+
+      {/* ── Orbs decorativos ──────────────────────────────────────────────── */}
+      <div className="absolute top-1/3 left-4 w-16 h-16 rounded-full bg-cyber-glow/5 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/3 right-4 w-20 h-20 rounded-full bg-cyber-glowAlt/5 blur-3xl pointer-events-none" />
     </section>
   )
 }
