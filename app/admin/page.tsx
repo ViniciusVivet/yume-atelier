@@ -19,14 +19,12 @@ export default async function AdminDashboard() {
     const supabase = createServerClient()
 
     // Usuario logado
-    const {
-      data: { user },
-    } = await withTimeout(
+    const userResult = (await withTimeout(
       supabase.auth.getUser(),
       DASHBOARD_TIMEOUT,
       'admin dashboard getUser'
-    )
-    adminEmail = user?.email ?? ''
+    )) as { data: { user: { email?: string | null } | null } }
+    adminEmail = userResult.data.user?.email ?? ''
 
     // Contadores com timeout
     const [productsTotalRes, categoriesTotalRes, productsStatusRes] = await Promise.all([

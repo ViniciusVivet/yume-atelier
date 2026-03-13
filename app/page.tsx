@@ -109,6 +109,12 @@ export default async function HomePage() {
       whatsappNumber={settings?.whatsapp_number}
       whatsappTemplate={settings?.whatsapp_message_template}
       isDemoMode={isDemoMode}
+      heroType={settings?.hero_type}
+      heroMediaUrls={settings?.hero_media_urls}
+      heroCarouselInterval={settings?.hero_carousel_interval}
+      heroVideoStart={settings?.hero_video_start}
+      heroVideoEnd={settings?.hero_video_end}
+      heroVideoLoop={settings?.hero_video_loop}
     />
   )
 }

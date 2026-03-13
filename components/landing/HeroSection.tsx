@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
+import { motion, useScroll, useTransform, AnimatePresence, MotionValue } from 'framer-motion'
 import { Zap, Droplets } from 'lucide-react'
 import { Category, HeroType, HeroMediaItem } from '@/lib/types'
 import Image from 'next/image'
@@ -35,7 +35,7 @@ interface HeroSectionProps {
 
 // ─── Background renderers ─────────────────────────────────────────────────────
 
-function GradientBg({ bgY }: { bgY: ReturnType<typeof useTransform> }) {
+function GradientBg({ bgY }: { bgY: MotionValue<string> }) {
   return (
     <motion.div className="absolute inset-0 z-0 scale-125 will-change-transform" style={{ y: bgY }}>
       <div
@@ -54,7 +54,7 @@ function GradientBg({ bgY }: { bgY: ReturnType<typeof useTransform> }) {
   )
 }
 
-function ImageBg({ url, bgY }: { url: string; bgY: ReturnType<typeof useTransform> }) {
+function ImageBg({ url, bgY }: { url: string; bgY: MotionValue<string> }) {
   return (
     <motion.div className="absolute inset-0 z-0 scale-110 will-change-transform" style={{ y: bgY }}>
       <Image src={url} alt="" fill className="object-cover" unoptimized priority />
@@ -121,7 +121,7 @@ function CarouselBg({
 }: {
   items: HeroMediaItem[]
   interval: number
-  bgY: ReturnType<typeof useTransform>
+  bgY: MotionValue<string>
 }) {
   const [index, setIndex] = useState(0)
 
