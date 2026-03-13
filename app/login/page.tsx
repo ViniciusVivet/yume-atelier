@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
-import { Home } from 'lucide-react'
+import { Home, Eye, EyeOff, Mail, Lock } from 'lucide-react'
 import { isAdminClient } from '@/lib/utils/admin'
+
+const EMAIL_STORAGE_KEY = 'yume-login-email'
 
 const LOG_PREFIX = '[YUME Login]'
 
@@ -27,7 +29,19 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [checkingAuth, setCheckingAuth] = useState(true)
+  const [showPassword, setShowPassword] = useState(false)
+  const [rememberEmail, setRememberEmail] = useState(true)
+  const [forgotPassword, setForgotPassword] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
   const supabase = createClient()
+
+  // Restaurar email salvo (lembrar de mim)
+  useEffect(() => {
+    try {
+      const saved = typeof window !== 'undefined' ? localStorage.getItem(EMAIL_STORAGE_KEY) : null
+      if (saved) setEmail(saved)
+    } catch {}
+  }, [])
 
   // So redireciona user comum para / (evita loop com admin layout no server)
   useEffect(() => {
@@ -97,12 +111,17 @@ export default function LoginPage() {
         }
 
         if (data.user) {
+          if (rememberEmail && email) {
+            try { localStorage.setItem(EMAIL_STORAGE_KEY, email) } catch {}
+          }
           if (data.session) {
-            window.location.href = '/'
+            setError('✅ Conta criada! Você já está logado e pode usar o site. O painel administrativo é restrito a administradores.')
+            setLoading(false)
+            setTimeout(() => { window.location.href = '/' }, 1500)
             return
           } else {
-            setError('✅ Conta criada! Verifique seu email para confirmar. Após confirmar, peça ao administrador para liberar seu acesso ao painel.')
-            setTimeout(() => setIsSignUp(false), 5000)
+            setError('✅ Conta criada! Verifique seu email e clique no link para confirmar. Depois você pode entrar normalmente. O painel admin é restrito a quem for liberado pelo administrador.')
+            setTimeout(() => setIsSignUp(false), 6000)
           }
         }
       } else {
@@ -122,6 +141,9 @@ export default function LoginPage() {
         }
 
         if (data.session) {
+          if (rememberEmail && email) {
+            try { localStorage.setItem(EMAIL_STORAGE_KEY, email) } catch {}
+          }
           const { data: adminCheck, error: adminError } = await supabase
             .from('admin_users')
             .select('email')
@@ -191,36 +213,119 @@ export default function LoginPage() {
             {isSignUp ? 'Criar Conta' : 'Entrar na Conta'}
           </p>
 
+          {forgotPassword ? (
+            <div className="space-y-4">
+              <p className="text-cyber-textDim text-sm">
+                Digite seu email e enviaremos um link para redefinir a senha.
+              </p>
+              <div>
+                <label className="block text-sm font-semibold text-cyber-text mb-2">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 rounded-lg bg-cyber-darker border border-cyber-border
+                    text-cyber-text focus:outline-none focus:border-cyber-glow"
+                  placeholder="seu@email.com"
+                />
+              </div>
+              {resetSent ? (
+                <p className="text-green-400 text-sm">Link enviado! Verifique seu email (e a pasta de spam).</p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!email) return
+                    setLoading(true)
+                    setError('')
+                    const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
+                      redirectTo: `${window.location.origin}/login?reset=1`,
+                    })
+                    setLoading(false)
+                    if (err) setError(err.message)
+                    else setResetSent(true)
+                  }}
+                  disabled={loading || !email}
+                  className="w-full px-6 py-3 rounded-lg bg-cyber-glow/20 border border-cyber-glow/50 text-cyber-glow font-semibold hover:bg-cyber-glow/30 disabled:opacity-50"
+                >
+                  {loading ? 'Enviando...' : 'Enviar link'}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => { setForgotPassword(false); setResetSent(false); setError('') }}
+                className="w-full text-cyber-textDim hover:text-cyber-glow text-sm"
+              >
+                Voltar ao login
+              </button>
+            </div>
+          ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-semibold text-cyber-text mb-2">
                 Email
               </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-4 py-3 rounded-lg bg-cyber-darker border border-cyber-border
-                  text-cyber-text focus:outline-none focus:border-cyber-glow transition-colors"
-                placeholder="seu@email.com"
-              />
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyber-textDim" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-cyber-darker border border-cyber-border
+                    text-cyber-text focus:outline-none focus:border-cyber-glow transition-colors"
+                  placeholder="seu@email.com"
+                />
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-semibold text-cyber-text mb-2">
                 Senha
               </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="w-full px-4 py-3 rounded-lg bg-cyber-darker border border-cyber-border
-                  text-cyber-text focus:outline-none focus:border-cyber-glow transition-colors"
-                placeholder="••••••"
-              />
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyber-textDim" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className="w-full pl-10 pr-12 py-3 rounded-lg bg-cyber-darker border border-cyber-border
+                    text-cyber-text focus:outline-none focus:border-cyber-glow transition-colors"
+                  placeholder="••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-cyber-textDim hover:text-cyber-glow transition-colors"
+                  aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-cyber-textDim hover:text-cyber-text">
+                <input
+                  type="checkbox"
+                  checked={rememberEmail}
+                  onChange={(e) => setRememberEmail(e.target.checked)}
+                  className="rounded border-cyber-border bg-cyber-darker text-cyber-glow focus:ring-cyber-glow"
+                />
+                Lembrar meu email
+              </label>
+              {!isSignUp && (
+                <button
+                  type="button"
+                  onClick={() => { setForgotPassword(true); setError('') }}
+                  className="text-sm text-cyber-textDim hover:text-cyber-glow transition-colors"
+                >
+                  Esqueci a senha
+                </button>
+              )}
             </div>
 
             {error && (
@@ -263,6 +368,7 @@ export default function LoginPage() {
               </button>
             </div>
           </form>
+          )}
         </div>
       </div>
     </div>
