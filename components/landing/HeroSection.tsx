@@ -167,8 +167,8 @@ function CarouselBg({
 
 export default function HeroSection({
   totalProducts,
-  heroType = 'gradient',
-  heroMediaUrls = [],
+  heroType = 'video',
+  heroMediaUrls = [{ url: '/videos/hero.mp4', type: 'video' }],
   heroCarouselInterval = 5,
   heroVideoStart,
   heroVideoEnd,
