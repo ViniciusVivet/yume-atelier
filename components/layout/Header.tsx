@@ -13,6 +13,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import CategoriesDrawer from '@/components/navigation/CategoriesDrawer'
 import SearchOverlay from '@/components/search/SearchOverlay'
 import Portal from '@/components/ui/Portal'
+import { cn } from '@/lib/utils/cn'
 
 const YUME_WHATSAPP = '5511986765219'
 const INSTAGRAM_URL = 'https://instagram.com/sp.yume'
@@ -22,6 +23,13 @@ function HeaderContent() {
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
   const router = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
@@ -60,8 +68,29 @@ function HeaderContent() {
   const whatsappHref = `https://wa.me/${(settings?.whatsapp_number || YUME_WHATSAPP).replace(/\D/g, '')}?text=${encodeURIComponent('Salve! Vim pelo site do YUME e quero saber sobre as peças.')}`
 
   return (
-    <header className="sticky top-0 z-50 border-b border-cyber-border bg-cyber-dark/95 backdrop-blur-xl">
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+    <header
+      className={cn(
+        'sticky top-0 z-50 border-b transition-all duration-500 relative',
+        scrolled ? 'border-cyber-glow/20' : 'border-transparent'
+      )}
+      style={{
+        background: scrolled ? 'rgba(10,10,10,0.82)' : 'rgba(10,10,10,0.1)',
+        backdropFilter: scrolled ? 'blur(20px) saturate(180%)' : 'blur(6px)',
+      }}
+    >
+      {/* Grid cyberpunk transparente */}
+      <div
+        className="absolute inset-0 pointer-events-none z-0 transition-opacity duration-500"
+        style={{
+          backgroundImage: `
+            linear-gradient(rgba(0,255,255,0.045) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0,255,255,0.045) 1px, transparent 1px)
+          `,
+          backgroundSize: '32px 32px',
+          opacity: scrolled ? 1 : 0.4,
+        }}
+      />
+      <div className="container mx-auto px-4 py-3 flex items-center justify-between relative z-10">
 
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group" aria-label="YUME — ir para a home">
@@ -226,8 +255,24 @@ export default function Header() {
   return (
     <ErrorBoundary
       fallback={
-        <header className="sticky top-0 z-50 border-b border-cyber-border bg-cyber-dark/95 backdrop-blur-xl">
-          <div className="container mx-auto px-4 py-3">
+        <header
+          className="sticky top-0 z-50 border-b border-cyber-glow/20 relative"
+          style={{
+            background: 'rgba(10,10,10,0.82)',
+            backdropFilter: 'blur(20px)',
+          }}
+        >
+          <div
+            className="absolute inset-0 pointer-events-none z-0"
+            style={{
+              backgroundImage: `
+                linear-gradient(rgba(0,255,255,0.045) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,255,255,0.045) 1px, transparent 1px)
+              `,
+              backgroundSize: '32px 32px',
+            }}
+          />
+          <div className="container mx-auto px-4 py-3 relative z-10">
             <Link href="/" className="font-display font-bold text-cyber-text">YUME</Link>
           </div>
         </header>

@@ -191,7 +191,7 @@ export default function HeroSection({
   return (
     <section
       ref={sectionRef}
-      className="relative min-h-[58vh] flex flex-col items-center justify-center overflow-hidden"
+      className="relative min-h-[44vh] flex flex-col items-center justify-center overflow-hidden"
     >
       {/* ── Background baseado no tipo ────────────────────────────────────── */}
       {heroType === 'gradient' && <GradientBg bgY={bgY} />}
