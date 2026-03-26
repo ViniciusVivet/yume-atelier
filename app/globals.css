@@ -2,6 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Cyber theme variables (dark = default) ── */
+:root {
+  --cyber-dark: 10 10 10;
+  --cyber-darker: 5 5 5;
+  --cyber-light: 26 26 26;
+  --cyber-border: 42 42 42;
+  --cyber-glow: 0 255 255;
+  --cyber-glowAlt: 255 0 255;
+  --cyber-text: 224 224 224;
+  --cyber-textDim: 136 136 136;
+}
+
+/* ── Light mode overrides ── */
+:root.light {
+  --cyber-dark: 248 248 245;
+  --cyber-darker: 238 238 234;
+  --cyber-light: 222 222 218;
+  --cyber-border: 190 188 182;
+  --cyber-glow: 0 155 162;
+  --cyber-glowAlt: 170 0 170;
+  --cyber-text: 18 18 18;
+  --cyber-textDim: 88 88 88;
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;

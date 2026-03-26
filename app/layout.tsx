@@ -10,6 +10,7 @@ import { withTimeout } from '@/lib/utils/withTimeout'
 import AppShell from '@/components/layout/AppShell'
 import { demoCategories } from '@/lib/demo/demoData'
 import { Category } from '@/lib/types'
+import { ThemeProvider } from '@/contexts/ThemeContext'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -66,17 +67,19 @@ export default async function RootLayout({
   const shellCategories = (categories && categories.length > 0 ? categories : demoCategories)
 
   return (
-    <html lang="pt-BR" className="dark">
+    <html lang="pt-BR">
       <body className={`${inter.variable} ${displayFont.variable} font-sans antialiased`}>
-        <ErrorBoundary>
-          <ToastProvider>
-            <SiteSettingsProvider>
-              <CartProvider>
-                <AppShell categories={shellCategories}>{children}</AppShell>
-              </CartProvider>
-            </SiteSettingsProvider>
-          </ToastProvider>
-        </ErrorBoundary>
+        <ThemeProvider>
+          <ErrorBoundary>
+            <ToastProvider>
+              <SiteSettingsProvider>
+                <CartProvider>
+                  <AppShell categories={shellCategories}>{children}</AppShell>
+                </CartProvider>
+              </SiteSettingsProvider>
+            </ToastProvider>
+          </ErrorBoundary>
+        </ThemeProvider>
       </body>
     </html>
   )

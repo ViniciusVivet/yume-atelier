@@ -10,14 +10,14 @@ const config: Config = {
     extend: {
       colors: {
         cyber: {
-          dark: '#0a0a0a',
-          darker: '#050505',
-          light: '#1a1a1a',
-          border: '#2a2a2a',
-          glow: '#00ffff',
-          glowAlt: '#ff00ff',
-          text: '#e0e0e0',
-          textDim: '#888888',
+          dark: 'rgb(var(--cyber-dark) / <alpha-value>)',
+          darker: 'rgb(var(--cyber-darker) / <alpha-value>)',
+          light: 'rgb(var(--cyber-light) / <alpha-value>)',
+          border: 'rgb(var(--cyber-border) / <alpha-value>)',
+          glow: 'rgb(var(--cyber-glow) / <alpha-value>)',
+          glowAlt: 'rgb(var(--cyber-glowAlt) / <alpha-value>)',
+          text: 'rgb(var(--cyber-text) / <alpha-value>)',
+          textDim: 'rgb(var(--cyber-textDim) / <alpha-value>)',
         },
       },
       fontFamily: {
@@ -51,9 +51,9 @@ const config: Config = {
         xs: '2px',
       },
       boxShadow: {
-        'glow': '0 0 20px rgba(0, 255, 255, 0.5)',
-        'glow-lg': '0 0 40px rgba(0, 255, 255, 0.6)',
-        'glow-pink': '0 0 20px rgba(255, 0, 255, 0.5)',
+        'glow': '0 0 20px rgb(var(--cyber-glow) / 0.5)',
+        'glow-lg': '0 0 40px rgb(var(--cyber-glow) / 0.6)',
+        'glow-pink': '0 0 20px rgb(var(--cyber-glowAlt) / 0.5)',
       },
     },
   },

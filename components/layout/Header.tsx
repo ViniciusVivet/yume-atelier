@@ -4,10 +4,11 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { LogOut, ShoppingBag, Grid3X3, Search, Instagram, MessageCircle, LayoutDashboard } from 'lucide-react'
+import { LogOut, ShoppingBag, Grid3X3, Search, Instagram, MessageCircle, LayoutDashboard, Sun, Moon } from 'lucide-react'
 import { useCart } from '@/contexts/CartContext'
 import { isAdminClient } from '@/lib/utils/admin'
 import { useSiteSettings } from '@/contexts/SiteSettingsContext'
+import { useTheme } from '@/contexts/ThemeContext'
 import CartSidebar from '@/components/store/CartSidebar'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import CategoriesDrawer from '@/components/navigation/CategoriesDrawer'
@@ -24,6 +25,7 @@ function HeaderContent() {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const { theme, toggle: toggleTheme } = useTheme()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12)
@@ -74,7 +76,9 @@ function HeaderContent() {
         scrolled ? 'border-cyber-glow/20' : 'border-transparent'
       )}
       style={{
-        background: scrolled ? 'rgba(10,10,10,0.82)' : 'rgba(10,10,10,0.1)',
+        background: scrolled
+          ? (theme === 'light' ? 'rgba(248,248,245,0.92)' : 'rgba(10,10,10,0.82)')
+          : (theme === 'light' ? 'rgba(248,248,245,0.15)' : 'rgba(10,10,10,0.10)'),
         backdropFilter: scrolled ? 'blur(20px) saturate(180%)' : 'blur(6px)',
       }}
     >
@@ -161,6 +165,18 @@ function HeaderContent() {
             >
               <MessageCircle className="w-4 h-4" />
             </a>
+
+            {/* Tema claro/escuro */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg bg-cyber-light/20 border border-cyber-border
+                text-cyber-textDim hover:text-cyber-glow hover:border-cyber-glow/40
+                transition-colors"
+              aria-label={theme === 'dark' ? 'Ativar modo claro' : 'Ativar modo escuro'}
+              title={theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
 
             {/* Carrinho */}
             <button
