@@ -10,8 +10,8 @@ export default function Footer() {
 
       {/* Background photo */}
       <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url(/images/yume-atelier.jpg)' }}
+        className="absolute inset-0 bg-cover bg-no-repeat"
+        style={{ backgroundImage: 'url(/images/yume-atelier.jpg)', backgroundPosition: 'center 30%' }}
       />
       {/* Dark overlay — mantém legibilidade independente do tema */}
       <div className="absolute inset-0 bg-black/72" />
