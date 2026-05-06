@@ -2,31 +2,17 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import Image from 'next/image'
-import { Product, ProductStatus } from '@/lib/types'
+import { Product } from '@/lib/types'
 import WhatsAppCTA from '../ui/WhatsAppCTA'
 import { useState } from 'react'
 import { useCart } from '@/contexts/CartContext'
 import { ShoppingBag, X } from 'lucide-react'
+import { statusConfig } from '@/lib/utils/product-status'
 
 interface ProductFocusProps {
   product: Product
   phoneNumber?: string
   messageTemplate?: string
-}
-
-const statusConfig: Record<ProductStatus, { label: string; className: string }> = {
-  available: {
-    label: 'Disponível',
-    className: 'text-green-400 border-green-400/30 bg-green-400/10',
-  },
-  sold_out: {
-    label: 'Sold Out',
-    className: 'text-red-400 border-red-400/30 bg-red-400/10 animate-glitch',
-  },
-  made_to_order: {
-    label: 'Sob Encomenda',
-    className: 'text-cyber-glow border-cyber-glow/30 bg-cyber-glow/10',
-  },
 }
 
 export default function ProductFocus({
@@ -36,6 +22,7 @@ export default function ProductFocus({
 }: ProductFocusProps) {
   const [activeIndex, setActiveIndex] = useState(0)
   const [isZoomOpen, setIsZoomOpen] = useState(false)
+  const [techOpen, setTechOpen] = useState(false)
   const { addToCart } = useCart()
   const statusInfo = statusConfig[product.status]
 
@@ -102,6 +89,7 @@ export default function ProductFocus({
               absolute top-4 right-4 px-4 py-2 rounded-full
               border backdrop-blur-md font-display text-sm font-semibold
               ${statusInfo.className}
+              ${product.status === 'sold_out' ? 'animate-glitch' : ''}
             `}
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -179,20 +167,38 @@ export default function ProductFocus({
 
           {/* Technical info (collapsible) */}
           {product.technical_info && (
-            <details className="group">
-              <summary className="cursor-pointer text-cyber-glow hover:text-cyber-glowAlt
-                font-display text-sm uppercase tracking-wider
-                transition-colors duration-300">
-                Info Técnica
-              </summary>
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                className="mt-2 text-cyber-textDim text-sm leading-relaxed overflow-hidden"
+            <div>
+              <button
+                type="button"
+                onClick={() => setTechOpen((o) => !o)}
+                className="flex items-center gap-2 text-cyber-glow hover:text-cyber-glowAlt
+                  font-display text-sm uppercase tracking-wider transition-colors duration-300"
               >
-                {product.technical_info}
-              </motion.div>
-            </details>
+                Info Técnica
+                <motion.span
+                  animate={{ rotate: techOpen ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-[10px] leading-none"
+                >
+                  ▼
+                </motion.span>
+              </button>
+              <AnimatePresence initial={false}>
+                {techOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                    className="overflow-hidden"
+                  >
+                    <p className="mt-3 text-cyber-textDim text-sm leading-relaxed">
+                      {product.technical_info}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           )}
 
           {/* Price */}

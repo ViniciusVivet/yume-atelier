@@ -5,8 +5,7 @@ import Image from 'next/image'
 import { X, ShoppingBag, Trash2, MessageCircle } from 'lucide-react'
 import { Product } from '@/lib/types'
 
-// Fallback: usado quando o número não está configurado no Supabase
-const YUME_WHATSAPP = '5511986765219'
+import { YUME_WHATSAPP } from '@/lib/constants'
 
 interface CartItem extends Product {
   quantity: number

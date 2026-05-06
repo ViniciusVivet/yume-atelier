@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import Link from 'next/link'
+import { YUME_WHATSAPP } from '@/lib/constants'
 
 interface HeroLandingProps {
   hasProducts: boolean
@@ -65,19 +65,21 @@ export default function HeroLanding({ hasProducts }: HeroLandingProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6 }}
           >
-            <Link
-              href="/admin"
+            <a
+              href={`https://wa.me/${YUME_WHATSAPP}?text=${encodeURIComponent('Salve! Vim pelo site do YUME e quero saber sobre as peças.')}`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="group relative px-8 py-4 rounded-lg
                 bg-cyber-glow/20 border-2 border-cyber-glow/50
                 backdrop-blur-md
                 text-cyber-glow font-display font-bold text-lg uppercase tracking-wider
                 transition-all duration-300
-                hover:bg-cyber-glow/30 hover:border-cyber-glow hover:shadow-glow-lg hover:scale-105
+                hover:bg-cyber-glow/30 hover:border-cyber-glow hover:scale-105
                 overflow-hidden"
             >
-              <span className="relative z-10">Painel Admin</span>
+              <span className="relative z-10">Falar com o Camaleão</span>
               <div className="absolute inset-0 bg-cyber-glow/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </Link>
+            </a>
             
             {!hasProducts && (
               <div className="px-8 py-4 rounded-lg

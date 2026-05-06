@@ -1,8 +1,6 @@
 import Link from 'next/link'
 import { Instagram, MessageCircle } from 'lucide-react'
-
-const YUME_WHATSAPP = '5511986765219'
-const INSTAGRAM_URL = 'https://instagram.com/sp.yume'
+import { YUME_WHATSAPP, YUME_INSTAGRAM } from '@/lib/constants'
 
 export default function Footer() {
   return (
@@ -25,10 +23,16 @@ export default function Footer() {
               夢 YUME
             </span>
           </Link>
-          <p className="text-white/60 text-xs max-w-xs">
+          <p className="text-white/60 text-xs max-w-xs mb-3">
             Moda upcycled feita à mão em São Paulo.<br />
             Zero desperdício. Zero igual.
           </p>
+          <Link
+            href="/sobre"
+            className="text-white/35 hover:text-cyber-glow text-xs tracking-wide transition-colors"
+          >
+            Sobre a YUME →
+          </Link>
         </div>
 
         {/* Direita: botões + crédito */}
@@ -37,7 +41,7 @@ export default function Footer() {
           {/* Social */}
           <div className="flex items-center gap-3">
             <a
-              href={INSTAGRAM_URL}
+              href={YUME_INSTAGRAM}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 px-4 py-2 rounded-lg

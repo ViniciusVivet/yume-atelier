@@ -3,19 +3,11 @@
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Product, ProductStatus } from '@/lib/types'
+import { Product } from '@/lib/types'
+import { statusConfig } from '@/lib/utils/product-status'
 
 interface InventoryCarouselProps {
   products: Product[]
-  whatsappNumber?: string
-  categoryBackground?: string
-  onProductChange?: (product: Product) => void
-}
-
-const statusConfig: Record<ProductStatus, { label: string; color: string }> = {
-  available: { label: 'Disponível', color: 'text-green-400 border-green-400/30 bg-green-400/10' },
-  sold_out: { label: 'Sold Out', color: 'text-red-400 border-red-400/30 bg-red-400/10' },
-  made_to_order: { label: 'Encomenda', color: 'text-cyber-glow border-cyber-glow/30 bg-cyber-glow/10' },
 }
 
 function ProductCard({ product, index }: { product: Product; index: number }) {
@@ -51,7 +43,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
 
           {/* Status badge */}
           <div className={`absolute top-2 right-2 px-2 py-0.5 rounded-full
-            border backdrop-blur-md text-[10px] font-semibold ${status.color}`}>
+            border backdrop-blur-md text-[10px] font-semibold ${status.className}`}>
             {status.label}
           </div>
         </div>
@@ -74,6 +66,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
 }
 
 export default function InventoryCarousel({ products }: InventoryCarouselProps) {
+
   const safeProducts = Array.isArray(products) ? products : []
 
   if (safeProducts.length === 0) {

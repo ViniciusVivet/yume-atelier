@@ -2,31 +2,17 @@
 
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import Image from 'next/image'
-import { Product, ProductStatus } from '@/lib/types'
+import { Product } from '@/lib/types'
 import { ShoppingBag } from 'lucide-react'
 import { useState, useRef } from 'react'
 import Skeleton from '@/components/ui/Skeleton'
+import { statusConfig } from '@/lib/utils/product-status'
 
 interface ProductCardProps {
   product: Product
   variant?: 'default' | 'minimal'
   onAddToCart?: (product: Product) => void
   onOpenModal?: (product: Product) => void
-}
-
-const statusConfig: Record<ProductStatus, { label: string; className: string }> = {
-  available: {
-    label: 'Disponível',
-    className: 'text-green-400',
-  },
-  sold_out: {
-    label: 'Sold Out',
-    className: 'text-red-400',
-  },
-  made_to_order: {
-    label: 'Sob Encomenda',
-    className: 'text-cyber-glow',
-  },
 }
 
 export default function ProductCard({ 
@@ -223,7 +209,7 @@ export default function ProductCard({
           className={`
             absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-display font-semibold
             backdrop-blur-md border z-20
-            ${statusInfo.className} border-current/30 bg-cyber-dark/50
+            ${statusInfo.className}
           `}
           style={{
             transform: 'translateZ(40px)',

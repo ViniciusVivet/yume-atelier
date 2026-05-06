@@ -16,8 +16,7 @@ import SearchOverlay from '@/components/search/SearchOverlay'
 import Portal from '@/components/ui/Portal'
 import { cn } from '@/lib/utils/cn'
 
-const YUME_WHATSAPP = '5511986765219'
-const INSTAGRAM_URL = 'https://instagram.com/sp.yume'
+import { YUME_WHATSAPP, YUME_INSTAGRAM } from '@/lib/constants'
 
 function HeaderContent() {
   const [isAdmin, setIsAdmin] = useState(false)
@@ -116,6 +115,14 @@ function HeaderContent() {
         {!isAdminPage && !isLoginPage && (
           <div className="flex items-center gap-1 sm:gap-2">
 
+            {/* Sobre — desktop only */}
+            <Link
+              href="/sobre"
+              className="hidden md:block px-3 py-2 text-sm text-cyber-textDim hover:text-cyber-glow transition-colors"
+            >
+              Sobre
+            </Link>
+
             {/* Categorias — ícone no mobile, texto no desktop */}
             <button
               onClick={() => setIsCategoriesOpen(true)}
@@ -142,7 +149,7 @@ function HeaderContent() {
 
             {/* Instagram — visível em todos os tamanhos */}
             <a
-              href={INSTAGRAM_URL}
+              href={YUME_INSTAGRAM}
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 rounded-lg bg-cyber-light/20 border border-cyber-border

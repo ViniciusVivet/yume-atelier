@@ -85,11 +85,7 @@ export default function StoreLayout({
 
       {/* 3 ── Coleção: o carrossel */}
       <section id="colecao" className="scroll-mt-14">
-        <InventoryCarousel
-          products={filteredProducts}
-          whatsappNumber={whatsappNumber}
-          categoryBackground={currentCategory?.background_image_url}
-        />
+        <InventoryCarousel products={filteredProducts} />
       </section>
     </div>
   )
