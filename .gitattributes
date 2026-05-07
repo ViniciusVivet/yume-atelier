@@ -1,0 +1,10 @@
+# Trata imagens e vídeos como binários — evita corrupção por conversão de line endings
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.gif binary
+*.webp binary
+*.avif binary
+*.mp4 binary
+*.mov binary
+*.webm binary
