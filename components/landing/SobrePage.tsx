@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { motion, useInView, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
+import Image from 'next/image'
 import { ArrowDown, ArrowRight, MessageCircle } from 'lucide-react'
 import { YUME_WHATSAPP } from '@/lib/constants'
 
@@ -535,21 +536,17 @@ export default function SobrePage() {
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-20 items-center">
 
-            {/* Image placeholder — trocar por <Image> quando tiver a foto */}
             <SectionReveal delay={0}>
               <div className="relative aspect-[3/4] rounded-2xl overflow-hidden
                 border border-cyber-glow/20 bg-cyber-darker">
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-                  <div className="w-24 h-24 rounded-full bg-cyber-glow/10 border border-cyber-glow/20
-                    flex items-center justify-center">
-                    <span className="font-display font-black text-5xl text-cyber-glow/40">C</span>
-                  </div>
-                  <p className="text-cyber-textDim text-sm text-center px-8">
-                    Foto do Camaleão
-                    <br />
-                    <span className="text-cyber-glow/30 text-xs">em breve</span>
-                  </p>
-                </div>
+                <Image
+                  src="/images/camalas.jpg"
+                  alt="Camaleão — fundador da YUME"
+                  fill
+                  className="object-cover"
+                  priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-cyber-dark/60 via-transparent to-transparent" />
                 <div className="absolute top-4 left-4 pointer-events-none">
                   <div className="absolute top-0 left-0 w-px h-8 bg-cyber-glow/40" />
                   <div className="absolute top-0 left-0 w-8 h-px bg-cyber-glow/40" />
